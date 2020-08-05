@@ -75,7 +75,12 @@ bool Image::SaveImageBmp(const string& filename) const {
 bool Image::Show(const string& title) {
   if (!IsValid()) return false;
   if (!display) {
-    display = std::make_unique<cimg_library::CImgDisplay>(*cimage, title.c_str());
+    try {
+      display = std::make_unique<cimg_library::CImgDisplay>(*cimage, title.c_str());
+    } catch (CImgException& ex) {
+      cout << "Failed to open display" << endl;
+      return false;
+    }
   } else {
     display->set_title(title.c_str());
     display->show();
@@ -85,13 +90,8 @@ bool Image::Show(const string& title) {
 }
 
 bool Image::ShowUntilClosed(const string& title) {
-  if (!IsValid()) return false;
-  if (!display) {
-    display = std::make_unique<cimg_library::CImgDisplay>(*cimage, title.c_str());
-  } else {
-    display->set_title(title.c_str());
-    display->show();
-    display->display(*cimage);
+  if (!Show(title)) {
+    return false;
   }
   while (!display->is_closed()) display->wait();
   return true;
