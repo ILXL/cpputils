@@ -17,17 +17,11 @@ graphics/image.h can be used to create, view, load and save images. Example:
 To use this as a submodule in another lab or project, run:
 
 ```
-git submodule add https://github.com/ILXL/cpputils
+git submodule add -b v1 https://github.com/ILXL/cpputils
 ```
 
-This will create a .gitmodules file which you can add and commit.
-
-You can choose to watch a particular branch so that any changes pushed to
-cpputils/master do not impact your project:
-
-```
-git config -f .gitmodules submodule.cpputils.branch v1
-```
+This will create a .gitmodules file which you can add and commit, pointed at a particular
+branch (in this case v1).
 
 Then make sure everyone who checks out the repo gets the updates, for example adding this
 command to your project Makefile to check if image.h is available:
