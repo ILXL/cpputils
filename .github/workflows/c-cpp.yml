@@ -10,9 +10,14 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    env:
+      DISPLAY: ':99'
 
     steps:
     - uses: actions/checkout@v2
+    - name: Setup headless environment
+      run: |
+        Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     - name: make image_unittest
       run: make image_unittest
       working-directory: graphics

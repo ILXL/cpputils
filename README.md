@@ -4,9 +4,13 @@ Libraries for student C++ code.
 
 ## Graphics
 
+![C/C++ CI](https://github.com/ILXL/cpputils/workflows/C/C++%20CI/badge.svg)
+
 graphics/image.h can be used to create, view, load and save images. Example:
 
 ![example fractal tree](graphics/example_fractal_tree.png)
+
+To update CImg.h to the latest, run ``make update_cimg`` in graphics/.
 
 ### TODOs:
 1. Set up continuous integration testing of image_unittest
@@ -23,7 +27,7 @@ git submodule add -b v1 https://github.com/ILXL/cpputils
 This will create a .gitmodules file which you can add and commit, pointed at a particular
 branch (in this case v1).
 
-Then make sure everyone who checks out the repo gets the updates, for example adding this
+Then make sure everyone who checks out the repo gets the submodule, for example adding this
 command to your project Makefile to check if image.h is available:
 
 ```

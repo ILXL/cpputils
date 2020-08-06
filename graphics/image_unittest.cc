@@ -116,7 +116,7 @@ TEST(ImageTest, Drawing) {
   image.DrawText(50, 50, "Kitties are cute", 32, 100, 200, 255);
 
   // Show works.
-  image.Show("Test image");
+  EXPECT_TRUE(image.Show("Test image"));
 
   // Hide works.
   image.Hide();
