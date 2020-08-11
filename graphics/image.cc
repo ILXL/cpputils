@@ -1,7 +1,7 @@
+#include <assert.h>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <assert.h>
 
 #include "cimg/CImg.h"
 #include "image.h"
@@ -13,7 +13,7 @@ using std::string;
 namespace graphics {
 
 namespace {
-  constexpr int MAX_PIXEL_VALUE = 255;
+constexpr int MAX_PIXEL_VALUE = 255;
 }
 
 Color::Color(int red, int green, int blue) {
@@ -31,11 +31,7 @@ Image::~Image() = default;
 
 Image::Image(int width, int height) {
   assert(width > 0 && height > 0 && "Width and height must be at least 1");
-  // Quiet exception mode.
-  cimg::exception_mode(0);
-  cimage = std::make_unique<cimg_library::CImg<uint8_t>>(width, height, 1, 3, MAX_PIXEL_VALUE);
-  width_ = width;
-  height_ = height;
+  Initialize(width, height);
 }
 
 bool Image::Load(const string& filename) {
@@ -45,18 +41,29 @@ bool Image::Load(const string& filename) {
   }
   cimg::exception_mode(0);
   try {
-    cimage = std::make_unique<cimg_library::CImg<uint8_t>>();
-    cimage->load(filename.c_str());
-  } catch (CImgException &e) {
+    cimage_ = std::make_unique<cimg_library::CImg<uint8_t>>();
+    cimage_->load(filename.c_str());
+  } catch (CImgException& e) {
     cout << "Failed to open image file " << filename << endl;
     return false;
   }
-  width_ = cimage->width();
-  height_ = cimage->height();
+  width_ = cimage_->width();
+  height_ = cimage_->height();
   if (!IsValid()) {
     cout << "Invaild image file " << filename << endl;
     return false;
   }
+  return true;
+}
+
+bool Image::Initialize(int width, int height) {
+  if (width < 1 || height < 1) return false;
+  // Quiet exception mode.
+  cimg::exception_mode(0);
+  cimage_ = std::make_unique<cimg_library::CImg<uint8_t>>(width, height, 1, 3,
+                                                          MAX_PIXEL_VALUE);
+  width_ = width;
+  height_ = height;
   return true;
 }
 
@@ -68,23 +75,24 @@ bool Image::SaveImageBmp(const string& filename) const {
     cout << "You must provide a non-empty filename" << endl;
     return false;
   }
-  cimage->save_bmp(filename.c_str());
+  cimage_->save_bmp(filename.c_str());
   return true;
 }
 
 bool Image::Show(const string& title) {
   if (!IsValid()) return false;
-  if (!display) {
+  if (!display_) {
     try {
-      display = std::make_unique<cimg_library::CImgDisplay>(*cimage, title.c_str());
+      display_ =
+          std::make_unique<cimg_library::CImgDisplay>(*cimage_, title.c_str());
     } catch (CImgException& ex) {
       cout << "Failed to open display" << endl;
       return false;
     }
   } else {
-    display->set_title(title.c_str());
-    display->show();
-    display->display(*cimage);
+    display_->set_title(title.c_str());
+    display_->show();
+    display_->display(*cimage_);
   }
   return true;
 }
@@ -93,14 +101,23 @@ bool Image::ShowUntilClosed(const string& title) {
   if (!Show(title)) {
     return false;
   }
-  while (!display->is_closed()) display->wait();
+  while (!display_->is_closed()) {
+    ProcessEvent();
+    display_->wait();
+  }
   return true;
 }
 
+void Image::Flush() {
+  if (display_ && !display_->is_closed()) {
+    display_->display(*cimage_);
+  }
+}
+
 void Image::Hide() {
-  if (display && !display->is_closed()) {
-    display->close();
-    display.reset();
+  if (display_ && !display_->is_closed()) {
+    display_->close();
+    display_.reset();
   }
 }
 
@@ -122,8 +139,8 @@ bool Image::SetColor(int x, int y, const Color& color) {
   if (!CheckPixelInBounds(x, y)) {
     return false;
   }
-  return SetRed(x, y, color.Red()) && SetGreen(x, y, color.Green())
-         && SetBlue(x, y, color.Blue());
+  return SetRed(x, y, color.Red()) && SetGreen(x, y, color.Green()) &&
+         SetBlue(x, y, color.Blue());
 }
 
 bool Image::SetRed(int x, int y, int r) { return SetPixel(x, y, 0, r); }
@@ -135,11 +152,11 @@ bool Image::SetBlue(int x, int y, int b) { return SetPixel(x, y, 2, b); }
 bool Image::DrawLine(int x0, int y0, int x1, int y1, int red, int green,
                      int blue) {
   const int color[] = {red, green, blue};
-  if (!CheckPixelInBounds(x0, y0) || !CheckPixelInBounds(x1, y1)
-      || !CheckColorInBounds(color)) {
+  if (!CheckPixelInBounds(x0, y0) || !CheckPixelInBounds(x1, y1) ||
+      !CheckColorInBounds(color)) {
     return false;
   }
-  cimage->draw_line(x0, y0, x1, y1, color);
+  cimage_->draw_line(x0, y0, x1, y1, color);
   return true;
 }
 
@@ -148,7 +165,7 @@ bool Image::DrawCircle(int x, int y, int radius, int red, int green, int blue) {
   if (!CheckPixelInBounds(x, y) || !CheckColorInBounds(color)) {
     return false;
   }
-  cimage->draw_circle(x, y, radius, color);
+  cimage_->draw_circle(x, y, radius, color);
   return true;
 }
 
@@ -158,17 +175,44 @@ bool Image::DrawRectangle(int x, int y, int width, int height, int red,
   if (!CheckPixelInBounds(x, y) || !CheckColorInBounds(color)) {
     return false;
   }
-  cimage->draw_rectangle(x, y, x + width, y + height, color);
+  cimage_->draw_rectangle(x, y, x + width, y + height, color);
   return true;
 }
 
-bool Image::DrawText(int x, int y, const string& text, int font_size, int red, int green, int blue) {
+bool Image::DrawText(int x, int y, const string& text, int font_size, int red,
+                     int green, int blue) {
   const int color[] = {red, green, blue};
   if (!CheckPixelInBounds(x, y) || !CheckColorInBounds(color)) {
     return false;
   }
-  cimage->draw_text(x, y, text.c_str(), color, 0, 1, font_size);
+  cimage_->draw_text(x, y, text.c_str(), color, 0, 1, font_size);
   return true;
+}
+
+void Image::ProcessEvent() {
+  if (display_->button() & 1 && display_->mouse_x() >= 0 &&
+      display_->mouse_y() >= 0) {
+    // Left button has been pressed or moved.
+    MouseAction action;
+    if (latest_event_.GetMouseAction() == MouseAction::kReleased) {
+      action = MouseAction::kPressed;
+    } else {
+      action = MouseAction::kDragged;
+    }
+    latest_event_ =
+        MouseEvent(display_->mouse_x(), display_->mouse_y(), action);
+    for (auto listener : mouse_listeners_) {
+      listener->OnMouseEvent(latest_event_);
+    }
+  } else if (!display_->button() &&
+             latest_event_.GetMouseAction() != MouseAction::kReleased) {
+    // Left button is not clicked.
+    latest_event_ = MouseEvent(latest_event_.GetX(), latest_event_.GetY(),
+                               MouseAction::kReleased);
+    for (auto listener : mouse_listeners_) {
+      listener->OnMouseEvent(latest_event_);
+    }
+  }
 }
 
 bool Image::CheckPixelInBounds(int x, int y) const {
@@ -190,7 +234,8 @@ bool Image::CheckColorInBounds(int value) const {
 bool Image::CheckColorInBounds(const int value[]) const {
   for (int i = 0; i < 3; i++) {
     if (value[i] < 0 || value[i] > MAX_PIXEL_VALUE) {
-      cout << value[i] << " is out of range, must be between 0 and 255." << endl;
+      cout << value[i] << " is out of range, must be between 0 and 255."
+           << endl;
       return false;
     }
   }
@@ -199,15 +244,16 @@ bool Image::CheckColorInBounds(const int value[]) const {
 
 int Image::GetPixel(int x, int y, int channel) const {
   if (!CheckPixelInBounds(x, y)) return -1;
-  const uint8_t *r = cimage->data(x, y, channel);
+  const uint8_t* r = cimage_->data(x, y, channel);
   return static_cast<int>(*r);
 }
 
 bool Image::SetPixel(int x, int y, int channel, int value) {
   if (!CheckPixelInBounds(x, y)) return false;
   if (!CheckColorInBounds(value)) return false;
-  uint8_t *px = cimage->data(x, y, channel);
+  uint8_t* px = cimage_->data(x, y, channel);
   *px = static_cast<uint8_t>(value);
+  // Inefficient. Should we have a "flush" or similar?
   return true;
 }
 

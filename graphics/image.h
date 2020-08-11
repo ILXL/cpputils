@@ -1,6 +1,9 @@
 #include <iostream>
 #include <memory>
+#include <set>
 #include <string>
+
+#include "image_event.h"
 
 #ifndef GRAPHICS_IMAGE_H
 #define GRAPHICS_IMAGE_H
@@ -41,7 +44,8 @@ class Color {
 
 // Use by gtest.
 static void PrintTo(const Color& color, std::ostream* stream) {
-  *stream << "Color: (" << color.Red() << "," << color.Green() << "," << color.Blue() << ")";
+  *stream << "Color: (" << color.Red() << "," << color.Green() << ","
+          << color.Blue() << ")";
 }
 
 class Image {
@@ -65,6 +69,12 @@ class Image {
    */
   bool Load(const std::string& filename);
 
+  /*
+   * Resets the image to be a blank white image size |width| by |height|,
+   * returns false if unsuccessful (if |width| or |height| are less than 1).
+   */
+  bool Initialize(int width, int height);
+
   /**
    * Saves the current image to the file with |filename| in bitmap
    * format. Returns false if saving failed.
@@ -74,9 +84,7 @@ class Image {
   /**
    * Shows the current image. Returns false if the image could not be shown.
    */
-  bool Show() {
-    return Show("Image");
-  }
+  bool Show() { return Show("Image"); }
 
   /**
    * Shows the image in a window with the title |title|. Returns false if
@@ -88,9 +96,7 @@ class Image {
    * Shows the current image until the window is closed. Returns false if
    * the image could not be shown.
    */
-  bool ShowUntilClosed() {
-    return ShowUntilClosed("Image");
-  }
+  bool ShowUntilClosed() { return ShowUntilClosed("Image"); }
 
   /**
    * Shows the current image until the window is closed.
@@ -100,6 +106,12 @@ class Image {
   bool ShowUntilClosed(const std::string& title);
 
   /**
+   * Refreshes the display with any update to the image. Does nothing if the
+   * image is not displayed.
+   */
+  void Flush();
+
+  /**
    * Hides the image if it is currently being shown.
    */
   void Hide();
@@ -107,12 +119,12 @@ class Image {
   /**
    * Returns the width of the loaded image, in pixels.
    */
-  int GetWidth() const {return width_;}
+  int GetWidth() const { return width_; }
 
   /**
    * Returns the height of the loaded image, in pixels.
    */
-  int GetHeight() const {return height_;}
+  int GetHeight() const { return height_; }
 
   /**
    * Gets the color at pixel at position (x, y) in the image.
@@ -202,7 +214,8 @@ class Image {
    * params are out of bounds.
    */
   bool DrawRectangle(int x, int y, int width, int height, const Color& color) {
-    return DrawRectangle(x, y, width, height, color.Red(), color.Green(), color.Blue());
+    return DrawRectangle(x, y, width, height, color.Red(), color.Green(),
+                         color.Blue());
   }
 
   /**
@@ -218,8 +231,10 @@ class Image {
    * with |font_size| in pixels, colored by |color|. Returns false if the
    * params are out of bounds.
    */
-  bool DrawText(int x, int y, const std::string& text, int font_size, const Color& color) {
-    return DrawText(x, y, text, font_size, color.Red(), color.Green(), color.Blue());
+  bool DrawText(int x, int y, const std::string& text, int font_size,
+                const Color& color) {
+    return DrawText(x, y, text, font_size, color.Red(), color.Green(),
+                    color.Blue());
   }
 
   /**
@@ -230,10 +245,39 @@ class Image {
   bool DrawText(int x, int y, const std::string& text, int font_size, int red,
                 int green, int blue);
 
- private:
-  bool IsValid() const {
-    return height_ > 0 && width_ > 0;
+  /**
+   * Adds a MouseEventListener to this image. This EventListener's OnMouseEvent
+   * function will be called whenever the display receives left-button mouse
+   * events.
+   */
+  void AddEventListener(MouseEventListener& listener) {
+    if (mouse_listeners_.find(&listener) == mouse_listeners_.end()) {
+      mouse_listeners_.insert(&listener);
+    }
   }
+
+  /**
+   * Removes a MouseEventListener if it was added. This EventListener's
+   * OnMouseEvent function will no longer be called when the display receives
+   * mouse events.
+   */
+  void RemoveEventListener(MouseEventListener& listener) {
+    if (mouse_listeners_.find(&listener) != mouse_listeners_.end()) {
+      mouse_listeners_.erase(&listener);
+    }
+  }
+
+ private:
+  friend class TestEventGenerator;
+
+  CImgDisplay* GetDisplayForTesting() {
+    if (!display_) return nullptr;
+    return display_.get();
+  }
+
+  void ProcessEvent();
+
+  bool IsValid() const { return height_ > 0 && width_ > 0; }
 
   bool CheckPixelInBounds(int x, int y) const;
 
@@ -247,8 +291,13 @@ class Image {
 
   int width_ = 0;
   int height_ = 0;
-  std::unique_ptr<CImg<uint8_t>> cimage;
-  std::unique_ptr<CImgDisplay> display;
+  std::unique_ptr<CImg<uint8_t>> cimage_;
+  std::unique_ptr<CImgDisplay> display_;
+
+  // Mouse listeners. Unowned.
+  std::set<MouseEventListener*> mouse_listeners_;
+
+  MouseEvent latest_event_ = MouseEvent(0, 0, MouseAction::kReleased);
 };
 
 }  // namespace graphics

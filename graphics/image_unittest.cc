@@ -3,6 +3,7 @@
 #include <string>
 
 #include "image.h"
+#include "test_event_generator.h"
 
 TEST(ImageTest, CreatesImageWithoutCrashing) {
   graphics::Image image(100, 100);
@@ -146,6 +147,61 @@ TEST(ImageTest, SavesAndLoadsImage) {
 
   // Delete the result.
   remove(filename.c_str());
+}
+
+class TestEventListener : public graphics::MouseEventListener {
+ public:
+  TestEventListener() = default;
+  ~TestEventListener() = default;
+  void OnMouseEvent(const graphics::MouseEvent& event) override {
+    latest_event_ = graphics::MouseEvent(event.GetX(), event.GetY(), event.GetMouseAction());
+  }
+
+  graphics::MouseEvent GetLatestEvent() {
+    return latest_event_;
+  }
+ private:
+  graphics::MouseEvent latest_event_ = graphics::MouseEvent(0, 0, graphics::MouseAction::kReleased);
+};
+
+// We can send fake events if we have a reference to the image on which to send events, and we
+// are not in the ShowUntilClosed loop.
+TEST(ImageEventTest, HandlesEvents) {
+  TestEventListener listener;
+  int size = 100;
+  graphics::Image image(size, size);
+  image.AddEventListener(listener);
+  image.Show();
+
+  graphics::TestEventGenerator generator(&image);
+  generator.MouseDown(10, 20);
+  EXPECT_EQ(listener.GetLatestEvent().GetX(), 10);
+  EXPECT_EQ(listener.GetLatestEvent().GetY(), 20);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kPressed);
+
+  generator.MoveMouseTo(30, 80);
+  EXPECT_EQ(listener.GetLatestEvent().GetX(), 30);
+  EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kDragged);
+
+  generator.MoveMouseTo(90, 80);
+  EXPECT_EQ(listener.GetLatestEvent().GetX(), 90);
+  EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kDragged);
+
+  generator.MouseUp();
+  EXPECT_EQ(listener.GetLatestEvent().GetX(), 90);
+  EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
+
+  generator.MoveMouseTo(30, 30);
+  // Nothing happens, mosue is up.
+  EXPECT_EQ(listener.GetLatestEvent().GetX(), 90);
+  EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
+
+  image.RemoveEventListener(listener);
+  image.Hide();
 }
 
 int main(int argc, char **argv) {
