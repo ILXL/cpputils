@@ -1,5 +1,5 @@
-#include "cimg/CImg.h"
-#include "image.h"
+#include "../cimg/CImg.h"
+#include "../image.h"
 
 #ifndef GRAPHICS_TEST_EVENT_GENERATOR_H
 #define GRAPHICS_TEST_EVENT_GENERATOR_H

@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "image.h"
+#include "../image.h"
 #include "test_event_generator.h"
 
 TEST(ImageTest, CreatesImageWithoutCrashing) {
