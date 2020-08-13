@@ -3,6 +3,7 @@
 #include <string>
 
 #include "../image.h"
+#include "image_test_utils.h"
 #include "test_event_generator.h"
 
 TEST(ImageTest, CreatesImageWithoutCrashing) {
@@ -147,6 +148,42 @@ TEST(ImageTest, SavesAndLoadsImage) {
 
   // Delete the result.
   remove(filename.c_str());
+}
+
+TEST(ImageTest, DrawsLinesWithThickness) {
+  remove("DrawsLinesWithThicknessHorizontal.bmp");
+  remove("DrawsLinesWithThicknessVertical.bmp");
+
+  int thickness = 20;
+  int size = 100;
+  graphics::Color blue(0, 0, 255);
+
+  graphics::Image expected(size, size);
+  graphics::Image actual(size, size);
+
+  // Horizontal rectangle is the same as a thick line.
+  expected.DrawRectangle(10, 40, 80, thickness, blue);
+  actual.DrawLine(10, 50, 90, 50, blue, thickness);
+  EXPECT_TRUE(ImagesMatch(&expected, &actual, "DrawsLinesWithThicknessHorizontal.bmp",
+      DiffType::kTypeHighlight));
+
+  // Vertical rectangle is the same as a thick line.
+  expected.DrawRectangle(40, 5, thickness, 90, blue);
+  actual.DrawLine(50, 5, 50, 95, blue, thickness);
+  EXPECT_TRUE(ImagesMatch(&expected, &actual, "DrawsLinesWithThicknessVertical.bmp",
+      DiffType::kTypeHighlight));
+
+  // 45 degree rectangle is as thick as expected. Check some points that wouldn't be
+  // colored unless the line had appropriate thickness.
+  graphics::Color green(0, 255, 0);
+  actual.DrawLine(0, 0, size - 1, size - 1, green, thickness);
+  EXPECT_EQ(actual.GetColor(thickness / 2, 0), green);
+  EXPECT_EQ(actual.GetColor(0, thickness / 2), green);
+  EXPECT_EQ(actual.GetColor(size / 2, size / 2 - thickness / 2), green);
+  EXPECT_EQ(actual.GetColor(size / 2, size / 2 + thickness / 2), green);
+
+  // But not too wide!
+  EXPECT_NE(actual.GetColor(size / 2, size / 2 + std::sqrt(2 * thickness * thickness)), green);
 }
 
 class TestEventListener : public graphics::MouseEventListener {

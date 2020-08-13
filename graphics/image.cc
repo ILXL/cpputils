@@ -164,14 +164,14 @@ bool Image::DrawLine(int x0, int y0, int x1, int y1, int red, int green,
     return true;
   }
   // Use CImage::draw_polygon to draw a thick line.
-  // Using https://stackoverflow.com/questions/5673448/can-the-cimg-library-draw-thick-lines.
   const double diff_x = x0 - x1;
   const double diff_y = y0 - y1;
   const double theta = std::atan(-diff_y / diff_x);
   const double hyp = thickness / 2.0;
 
-  const double delta_x = hyp * std::sin(theta);
-  const double delta_y = hyp * std::cos(theta);
+  // Convert to integer to get nearest pixel.
+  const int delta_x = hyp * std::sin(theta);
+  const int delta_y = hyp * std::cos(theta);
 
   CImg<int> points(4, 2);
   points(0, 0) = x0 + delta_x;
