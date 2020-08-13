@@ -90,7 +90,7 @@ bool Image::Show(const string& title) {
       return false;
     }
   } else {
-    display_->set_title(title.c_str());
+    display_->set_title("%s", title.c_str());
     display_->show();
     display_->display(*cimage_);
   }
@@ -150,13 +150,40 @@ bool Image::SetGreen(int x, int y, int g) { return SetPixel(x, y, 1, g); }
 bool Image::SetBlue(int x, int y, int b) { return SetPixel(x, y, 2, b); }
 
 bool Image::DrawLine(int x0, int y0, int x1, int y1, int red, int green,
-                     int blue) {
+                     int blue, int thickness) {
   const int color[] = {red, green, blue};
-  if (!CheckPixelInBounds(x0, y0) || !CheckPixelInBounds(x1, y1) ||
+  if (thickness < 1 || !CheckPixelInBounds(x0, y0) || !CheckPixelInBounds(x1, y1) ||
       !CheckColorInBounds(color)) {
     return false;
   }
-  cimage_->draw_line(x0, y0, x1, y1, color);
+  if (x0 == x1 && y0 == y1) {
+    return true;
+  }
+  if (thickness == 1) {
+    cimage_->draw_line(x0, y0, x1, y1, color);
+    return true;
+  }
+  // Use CImage::draw_polygon to draw a thick line.
+  // Using https://stackoverflow.com/questions/5673448/can-the-cimg-library-draw-thick-lines.
+  const double diff_x = x0 - x1;
+  const double diff_y = y0 - y1;
+  const double theta = std::atan(-diff_y / diff_x);
+  const double hyp = thickness / 2.0;
+
+  const double delta_x = hyp * std::sin(theta);
+  const double delta_y = hyp * std::cos(theta);
+
+  CImg<int> points(4, 2);
+  points(0, 0) = x0 + delta_x;
+  points(0, 1) = y0 + delta_y;
+  points(1, 0) = x0 - delta_x;
+  points(1, 1) = y0 - delta_y;
+  points(2, 0) = x1 - delta_x;
+  points(2, 1) = y1 - delta_y;
+  points(3, 0) = x1 + delta_x;
+  points(3, 1) = y1 + delta_y;
+
+  cimage_->draw_polygon(points, color);
   return true;
 }
 

@@ -28,8 +28,11 @@ class Color {
   ~Color() = default;
 
   bool operator==(const Color& other) const {
-    return red_ == other.Red() && green_ == other.Green() &&
-           blue_ == other.Blue();
+    return red_ == other.Red() && green_ == other.Green() && blue_ == other.Blue();
+  }
+
+  bool operator!=(const Color& other) const {
+    return red_ != other.Red() || green_ != other.Green() || blue_ != other.Blue();
   }
 
   int Red() const { return red_; }
@@ -179,19 +182,18 @@ class Image {
   bool SetBlue(int x, int y, int b);
 
   /**
-   * Draws a line from (x0, y0) to (x1, y1) with color |color|.
+   * Draws a line from (x0, y0) to (x1, y1) with color |color| and optional width |thickness|.
    * Returns false if params are out of bounds.
    */
-  bool DrawLine(int x0, int y0, int x1, int y1, const Color& color) {
-    return DrawLine(x0, y0, x1, y1, color.Red(), color.Green(), color.Blue());
+  bool DrawLine(int x0, int y0, int x1, int y1, const Color& color, int thickness = 1) {
+    return DrawLine(x0, y0, x1, y1, color.Red(), color.Green(), color.Blue(), thickness);
   }
 
   /**
-   * Draws a line from (x0, y0) to (x1, y1) with color specified
-   * by |red|, |green| and |blue| channels. Returns false if params
-   * are out of bounds.
+   * Draws a line from (x0, y0) to (x1, y1) with color specified  by |red|, |green| and
+   * |blue| channels, and optional width |thickness|. Returns false if params are out of bounds.
    */
-  bool DrawLine(int x0, int y0, int x1, int y1, int red, int green, int blue);
+  bool DrawLine(int x0, int y0, int x1, int y1, int red, int green, int blue, int thickness = 1);
 
   /**
    * Draws a circle centered at (x, y) with radius |radius|, and color
