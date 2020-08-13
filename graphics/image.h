@@ -252,7 +252,7 @@ class Image {
    * function will be called whenever the display receives left-button mouse
    * events.
    */
-  void AddEventListener(MouseEventListener& listener) {
+  void AddMouseEventListener(MouseEventListener& listener) {
     if (mouse_listeners_.find(&listener) == mouse_listeners_.end()) {
       mouse_listeners_.insert(&listener);
     }
@@ -263,7 +263,7 @@ class Image {
    * OnMouseEvent function will no longer be called when the display receives
    * mouse events.
    */
-  void RemoveEventListener(MouseEventListener& listener) {
+  void RemoveMouseEventListener(MouseEventListener& listener) {
     if (mouse_listeners_.find(&listener) != mouse_listeners_.end()) {
       mouse_listeners_.erase(&listener);
     }

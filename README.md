@@ -8,7 +8,7 @@ Libraries for student C++ code.
 
 graphics/image.h can be used to create, view, load and save images. Example:
 
-![example fractal tree](graphics/example_fractal_tree.png)
+![example fractal tree](graphics/test/example_fractal_tree.png)
 
 ### Usage
 
@@ -16,6 +16,8 @@ graphics/image.h can be used to create, view, load and save images. Example:
 be loaded from file or created. Users may access and set per-pixel color data. Image can be modified
 by manipulating them at the pixel level, as well as by drawing lines, circles, rectangles and text.
 Images can be displayed and saved as bitmaps (an uncompressed format).
+
+[image_event.h](graphics/image_event.h) provides a ``MouseEvent`` and a ``MouseEventListener`` interface. Extend the ``MouseEventListener`` interface and implement ``OnMouseEvent``. To begin receiving mouse events, use  ``Image::AddMouseEventListener`` to register for mouse events, and enter the event loop with ``Image::ShowUntilClosed``. Note you will need to use ``Image::Flush`` (and ``cout::flush``) to ensure updates are noted after calling ``Image::ShowUntilClosed``.
 
 ### Development
 

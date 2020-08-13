@@ -207,7 +207,7 @@ TEST(ImageEventTest, HandlesEvents) {
   TestEventListener listener;
   int size = 100;
   graphics::Image image(size, size);
-  image.AddEventListener(listener);
+  image.AddMouseEventListener(listener);
   image.Show();
 
   graphics::TestEventGenerator generator(&image);
@@ -237,7 +237,7 @@ TEST(ImageEventTest, HandlesEvents) {
   EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
   EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
 
-  image.RemoveEventListener(listener);
+  image.RemoveMouseEventListener(listener);
   image.Hide();
 }
 

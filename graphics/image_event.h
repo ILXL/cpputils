@@ -35,6 +35,11 @@ class MouseEvent {
   MouseAction action_;
 };
 
+/**
+ * Abstract interface for listening to MouseEvents on images.
+ * Use Image::AddMouseEventListener and Image::RemoveMouse EventListener to start and stop
+ * listening for mouse events on the Image's display, shown with Image::ShowUntilClosed().
+ */
 class MouseEventListener {
  public:
   virtual void OnMouseEvent(const MouseEvent& event) = 0;

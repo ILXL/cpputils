@@ -117,7 +117,6 @@ void Image::Flush() {
 void Image::Hide() {
   if (display_ && !display_->is_closed()) {
     display_->close();
-    display_.reset();
   }
 }
 
