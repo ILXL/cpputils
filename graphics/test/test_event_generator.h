@@ -28,7 +28,21 @@ class TestEventGenerator {
   void MouseUp() {
     if (!image_->GetDisplayForTesting()) return;
     cimg_library::CImgDisplay* display = image_->GetDisplayForTesting();
-    display->set_button();
+    display->set_button(1, false /* is pressed*/);
+    image_->ProcessEvent();
+  }
+
+  void RightMouseDown() {
+    if (!image_->GetDisplayForTesting()) return;
+    cimg_library::CImgDisplay* display = image_->GetDisplayForTesting();
+    display->set_button(0x2, true /* is pressed*/);
+    image_->ProcessEvent();
+  }
+
+  void RightMouseUp() {
+    if (!image_->GetDisplayForTesting()) return;
+    cimg_library::CImgDisplay* display = image_->GetDisplayForTesting();
+    display->set_button(0x2, false /* is pressed*/);
     image_->ProcessEvent();
   }
 

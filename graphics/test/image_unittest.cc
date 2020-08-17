@@ -237,6 +237,17 @@ TEST(ImageEventTest, HandlesEvents) {
   EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
   EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
 
+  // Ensure other mouse buttons don't interfere.
+  generator.MouseDown(10, 20);
+  generator.RightMouseDown();
+  generator.RightMouseUp();
+  EXPECT_EQ(listener.GetLatestEvent().GetX(), 10);
+  EXPECT_EQ(listener.GetLatestEvent().GetY(), 20);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kPressed);
+  generator.RightMouseDown();
+  generator.MouseUp();
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
+
   image.RemoveMouseEventListener(listener);
   image.Hide();
 }

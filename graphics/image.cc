@@ -216,21 +216,25 @@ bool Image::DrawText(int x, int y, const string& text, int font_size, int red,
 }
 
 void Image::ProcessEvent() {
-  if (display_->button() & 1 && display_->mouse_x() >= 0 &&
-      display_->mouse_y() >= 0) {
+  int mouse_x = display_->mouse_x();
+  int mouse_y = display_->mouse_y();
+  if (display_->button() & 1 && mouse_x >= 0 && mouse_y >= 0) {
     // Left button has been pressed or moved.
     MouseAction action;
     if (latest_event_.GetMouseAction() == MouseAction::kReleased) {
       action = MouseAction::kPressed;
     } else {
+      if (mouse_x == latest_event_.GetX() && mouse_y == latest_event_.GetY()) {
+        // Mouse position hasn't changed, so don't send a drag event.
+        return;
+      }
       action = MouseAction::kDragged;
     }
-    latest_event_ =
-        MouseEvent(display_->mouse_x(), display_->mouse_y(), action);
+    latest_event_ = MouseEvent(mouse_x, mouse_y, action);
     for (auto listener : mouse_listeners_) {
       listener->OnMouseEvent(latest_event_);
     }
-  } else if (!display_->button() &&
+  } else if (!(display_->button() & 1) &&
              latest_event_.GetMouseAction() != MouseAction::kReleased) {
     // Left button is not clicked.
     latest_event_ = MouseEvent(latest_event_.GetX(), latest_event_.GetY(),
