@@ -20,11 +20,11 @@ namespace graphics {
 
 /**
  * Represents an RGB pixel color, where |red|, |green| and |blue|
- * may be between 0 and 255, inclusive.
+ * may be between 0 and 255, inclusive. Default color is black.
  */
 class Color {
  public:
-  explicit Color(int red, int green, int blue);
+  explicit Color(int red = 0, int green = 0, int blue = 0);
   ~Color() = default;
 
   bool operator==(const Color& other) const {
@@ -38,6 +38,10 @@ class Color {
   int Red() const { return red_; }
   int Green() const { return green_; }
   int Blue() const { return blue_; }
+
+  void SetRed(int red) { red_ = red; }
+  void SetGreen(int green) { green_ = green; }
+  void SetBlue(int blue) { blue_ = blue; }
 
  private:
   int red_;
