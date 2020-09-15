@@ -232,10 +232,10 @@ TEST(ImageEventTest, HandlesEvents) {
   EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
 
   generator.MoveMouseTo(30, 30);
-  // Nothing happens, mosue is up.
-  EXPECT_EQ(listener.GetLatestEvent().GetX(), 90);
-  EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
-  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
+  // Mouse moved event.
+  EXPECT_EQ(listener.GetLatestEvent().GetX(), 30);
+  EXPECT_EQ(listener.GetLatestEvent().GetY(), 30);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kMoved);
 
   // Ensure other mouse buttons don't interfere.
   generator.MouseDown(10, 20);

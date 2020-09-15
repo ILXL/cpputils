@@ -97,14 +97,25 @@ bool Image::Show(const string& title) {
   return true;
 }
 
-bool Image::ShowUntilClosed(const string& title) {
+bool Image::ShowUntilClosed(const string& title, int animation_ms) {
   if (!Show(title)) {
     return false;
   }
   while (!display_->is_closed()) {
     ProcessEvent();
-    display_->wait();
+    if (timer_ > animation_ms) {
+      for (auto listener : animation_listeners_) {
+        listener->OnAnimationStep();
+      }
+      // Reset the timer.
+      timer_ = timer_ % animation_ms;
+    }
+    // May need to tweak this for performance.
+    const int kEventCheckMs = 5;
+    display_->wait(kEventCheckMs);
+    timer_ += kEventCheckMs;
   }
+  timer_ = 0;
   return true;
 }
 
@@ -221,7 +232,8 @@ void Image::ProcessEvent() {
   if (display_->button() & 1 && mouse_x >= 0 && mouse_y >= 0) {
     // Left button has been pressed or moved.
     MouseAction action;
-    if (latest_event_.GetMouseAction() == MouseAction::kReleased) {
+    if (latest_event_.GetMouseAction() == MouseAction::kReleased ||
+        latest_event_.GetMouseAction() == MouseAction::kMoved) {
       action = MouseAction::kPressed;
     } else {
       if (mouse_x == latest_event_.GetX() && mouse_y == latest_event_.GetY()) {
@@ -234,13 +246,24 @@ void Image::ProcessEvent() {
     for (auto listener : mouse_listeners_) {
       listener->OnMouseEvent(latest_event_);
     }
-  } else if (!(display_->button() & 1) &&
-             latest_event_.GetMouseAction() != MouseAction::kReleased) {
+  } else if (!(display_->button() & 1)) {
     // Left button is not clicked.
-    latest_event_ = MouseEvent(latest_event_.GetX(), latest_event_.GetY(),
-                               MouseAction::kReleased);
-    for (auto listener : mouse_listeners_) {
-      listener->OnMouseEvent(latest_event_);
+    if (latest_event_.GetMouseAction() == MouseAction::kDragged ||
+        latest_event_.GetMouseAction() == MouseAction::kPressed) {
+      // We were dragging or pressing, send a release.
+      latest_event_ = MouseEvent(latest_event_.GetX(), latest_event_.GetY(),
+                                 MouseAction::kReleased);
+      for (auto listener : mouse_listeners_) {
+        listener->OnMouseEvent(latest_event_);
+      }
+    } else if (mouse_x != latest_event_.GetX() &&
+               mouse_y != latest_event_.GetY() &&
+               mouse_x >= 0 && mouse_y >= 0) {
+      // Mouse position has changed, send a move.
+      latest_event_ = MouseEvent(mouse_x, mouse_y, MouseAction::kMoved);
+      for (auto listener : mouse_listeners_) {
+        listener->OnMouseEvent(latest_event_);
+      }
     }
   }
 }

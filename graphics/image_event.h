@@ -7,9 +7,14 @@ namespace graphics {
  * Enum representing whether a button was pressed or released.
  */
 enum class MouseAction {
+  // Left button down.
   kPressed = 0,
+  // Moved while left button was down.
   kDragged,
+  // Left button up.
   kReleased,
+  // Moved but the left button was not down.
+  kMoved,
 };
 
 /**
@@ -43,6 +48,17 @@ class MouseEvent {
 class MouseEventListener {
  public:
   virtual void OnMouseEvent(const MouseEvent& event) = 0;
+};
+
+/**
+ * Abstract interface for listening to AnimationEvents on images. Add and
+ * remove with Image::Add/RemoveAnimationEventListener
+ * Use Image::ShowUntilClosed with a ms for custom animation duration, and the
+ * AnimationListener::OnAnimationStep() will be called at that duration.
+ */
+class AnimationEventListener {
+ public:
+  virtual void OnAnimationStep() = 0;
 };
 
 }  // namespace graphics
