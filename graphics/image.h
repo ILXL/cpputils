@@ -18,6 +18,8 @@ using namespace cimg_library;
 
 namespace graphics {
 
+const int kDefaultAnimationMs = 30;
+
 /**
  * Represents an RGB pixel color, where |red|, |green| and |blue|
  * may be between 0 and 255, inclusive. Default color is black.
@@ -111,7 +113,7 @@ class Image {
    * could not be shown.
    */
   bool ShowUntilClosed(const std::string& title) {
-    return ShowUntilClosed(title, 30);
+    return ShowUntilClosed(title, kDefaultAnimationMs);
   }
 
   bool ShowUntilClosed(const std::string& title, int animation_ms);
