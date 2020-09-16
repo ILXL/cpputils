@@ -18,6 +18,8 @@ using namespace cimg_library;
 
 namespace graphics {
 
+const int kDefaultAnimationMs = 30;
+
 /**
  * Represents an RGB pixel color, where |red|, |green| and |blue|
  * may be between 0 and 255, inclusive. Default color is black.
@@ -110,7 +112,11 @@ class Image {
    * Optional |title| for the window. Returns false if the image
    * could not be shown.
    */
-  bool ShowUntilClosed(const std::string& title);
+  bool ShowUntilClosed(const std::string& title) {
+    return ShowUntilClosed(title, kDefaultAnimationMs);
+  }
+
+  bool ShowUntilClosed(const std::string& title, int animation_ms);
 
   /**
    * Refreshes the display with any update to the image. Does nothing if the
@@ -252,7 +258,7 @@ class Image {
                 int green, int blue);
 
   /**
-   * Adds a MouseEventListener to this image. This EventListener's OnMouseEvent
+   * Adds a MouseEventListener to this image. This MouseEventListener's OnMouseEvent
    * function will be called whenever the display receives left-button mouse
    * events.
    */
@@ -263,13 +269,35 @@ class Image {
   }
 
   /**
-   * Removes a MouseEventListener if it was added. This EventListener's
+   * Removes a MouseEventListener if it was added. This MouseEventListener's
    * OnMouseEvent function will no longer be called when the display receives
    * mouse events.
    */
   void RemoveMouseEventListener(MouseEventListener& listener) {
     if (mouse_listeners_.find(&listener) != mouse_listeners_.end()) {
       mouse_listeners_.erase(&listener);
+    }
+  }
+
+  /**
+   * Adds a AnimationEventListener to this image. This AnimationEventListener's
+   * OnAnimationStep function will be called whenever the time has ellapsed
+   * for the next animation step.
+   */
+  void AddAnimationEventListener(AnimationEventListener& listener) {
+    if (animation_listeners_.find(&listener) == animation_listeners_.end()) {
+      animation_listeners_.insert(&listener);
+    }
+  }
+
+  /**
+   * Removes a AnimationEventListener if it was added. This
+   * AnimationEventListener's OnAnimationStep function will no longer be called
+   * every animation step.
+   */
+  void RemoveAnimationEventListener(AnimationEventListener& listener) {
+    if (animation_listeners_.find(&listener) != animation_listeners_.end()) {
+      animation_listeners_.erase(&listener);
     }
   }
 
@@ -299,9 +327,13 @@ class Image {
   int height_ = 0;
   std::unique_ptr<CImg<uint8_t>> cimage_;
   std::unique_ptr<CImgDisplay> display_;
+  int timer_ = 0;
 
   // Mouse listeners. Unowned.
   std::set<MouseEventListener*> mouse_listeners_;
+
+  // Animation listeners. Unowned.
+  std::set<AnimationEventListener*> animation_listeners_;
 
   MouseEvent latest_event_ = MouseEvent(0, 0, MouseAction::kReleased);
 };
