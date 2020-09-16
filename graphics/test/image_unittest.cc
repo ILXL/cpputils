@@ -154,7 +154,7 @@ TEST(ImageTest, DrawsLinesWithThickness) {
   remove("DrawsLinesWithThicknessHorizontal.bmp");
   remove("DrawsLinesWithThicknessVertical.bmp");
 
-  int thickness = 20;
+  int thickness = 21;
   int size = 100;
   graphics::Color blue(0, 0, 255);
 
@@ -162,13 +162,13 @@ TEST(ImageTest, DrawsLinesWithThickness) {
   graphics::Image actual(size, size);
 
   // Horizontal rectangle is the same as a thick line.
-  expected.DrawRectangle(10, 40, 80, thickness, blue);
+  expected.DrawRectangle(10, 40, 81, thickness, blue);
   actual.DrawLine(10, 50, 90, 50, blue, thickness);
   EXPECT_TRUE(ImagesMatch(&expected, &actual, "DrawsLinesWithThicknessHorizontal.bmp",
       DiffType::kTypeHighlight));
 
   // Vertical rectangle is the same as a thick line.
-  expected.DrawRectangle(40, 5, thickness, 90, blue);
+  expected.DrawRectangle(40, 5, thickness, 91, blue);
   actual.DrawLine(50, 5, 50, 95, blue, thickness);
   EXPECT_TRUE(ImagesMatch(&expected, &actual, "DrawsLinesWithThicknessVertical.bmp",
       DiffType::kTypeHighlight));

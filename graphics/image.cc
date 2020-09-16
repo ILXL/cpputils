@@ -212,7 +212,10 @@ bool Image::DrawRectangle(int x, int y, int width, int height, int red,
   if (!CheckPixelInBounds(x, y) || !CheckColorInBounds(color)) {
     return false;
   }
-  cimage_->draw_rectangle(x, y, x + width, y + height, color);
+  if (width < 0 || height < 0) {
+    return false;
+  }
+  cimage_->draw_rectangle(x, y, x + width - 1, y + height - 1, color);
   return true;
 }
 
