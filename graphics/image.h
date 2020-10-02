@@ -27,20 +27,40 @@ const int kDefaultAnimationMs = 30;
 class Color {
  public:
   explicit Color(int red = 0, int green = 0, int blue = 0);
+
+  // Copy constructor.
+  Color(const Color& other) {
+    red_ = other.Red();
+    green_ = other.Green();
+    blue_ = other.Blue();
+  }
+
+  // Assignment operator.
+  Color& operator=(const Color& other) {
+    red_ = other.Red();
+    green_ = other.Green();
+    blue_ = other.Blue();
+    return *this;
+  }
+
   ~Color() = default;
 
+  // Equality operator.
   bool operator==(const Color& other) const {
     return red_ == other.Red() && green_ == other.Green() && blue_ == other.Blue();
   }
 
+  // Inequality operator.
   bool operator!=(const Color& other) const {
     return red_ != other.Red() || green_ != other.Green() || blue_ != other.Blue();
   }
 
+  // Getters
   int Red() const { return red_; }
   int Green() const { return green_; }
   int Blue() const { return blue_; }
 
+  // Setters
   void SetRed(int red) { red_ = red; }
   void SetGreen(int green) { green_ = green; }
   void SetBlue(int blue) { blue_ = blue; }

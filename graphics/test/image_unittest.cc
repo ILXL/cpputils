@@ -48,6 +48,20 @@ TEST(ImageDeathTest, InvalidSizeConstructorNegative) {
   ASSERT_DEATH(graphics::Image image(10, -1), "");
 }
 
+TEST(ColorTest, ColorOperators) {
+  graphics::Color black(0, 0, 0);
+  graphics::Color red(255, 0, 0);
+  ASSERT_NE(black, red);
+  ASSERT_EQ(red, graphics::Color(255, 0, 0));
+
+  graphics::Color red_copy = red;
+  ASSERT_EQ(red, red_copy);
+
+  graphics::Color& red_ref = red;
+  red_ref.SetBlue(255);
+  ASSERT_EQ(red.Blue(), 255);
+}
+
 TEST(ImageTest, BlankImageCreation) {
   // Check size is correct.
   graphics::Image image(10, 10);
