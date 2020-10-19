@@ -119,7 +119,20 @@ class Image {
    * Shows the image in a window with the title |title|. Returns false if
    * the image could not be shown.
    */
-  bool Show(const std::string& title);
+  bool Show(const std::string& title) { return ShowForMs(0, "Image"); }
+
+  /**
+   * Shows the image in a window for |milliseconds| duration. Returns false if
+   * the image could not be shown, or true after |milliseconds| are ellapsed.
+   */
+  bool ShowForMs(int milliseconds) { return ShowForMs(milliseconds, "Image"); }
+
+  /**
+   * Shows the image in a window with the title |title| for |milliseconds|
+   * duration. Returns false if the image could not be shown, or true after
+   * |milliseconds| are ellapsed.
+   */
+  bool ShowForMs(int milliseconds, const std::string& title);
 
   /**
    * Shows the current image until the window is closed. Returns false if

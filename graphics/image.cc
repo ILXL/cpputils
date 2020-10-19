@@ -79,7 +79,7 @@ bool Image::SaveImageBmp(const string& filename) const {
   return true;
 }
 
-bool Image::Show(const string& title) {
+bool Image::ShowForMs(int milliseconds, const std::string& title) {
   if (!IsValid()) return false;
   if (!display_) {
     try {
@@ -93,6 +93,7 @@ bool Image::Show(const string& title) {
     display_->set_title("%s", title.c_str());
     display_->show();
     display_->display(*cimage_);
+    if (milliseconds > 0) display_->wait(milliseconds);
   }
   return true;
 }
