@@ -344,6 +344,8 @@ class Image {
 
   void ProcessEvent();
 
+  void ProcessAnimation();
+
   bool IsValid() const { return height_ > 0 && width_ > 0; }
 
   bool CheckPixelInBounds(int x, int y) const;

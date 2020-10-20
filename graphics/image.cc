@@ -105,9 +105,7 @@ bool Image::ShowUntilClosed(const string& title, int animation_ms) {
   while (!display_->is_closed()) {
     ProcessEvent();
     if (timer_ > animation_ms) {
-      for (auto listener : animation_listeners_) {
-        listener->OnAnimationStep();
-      }
+      ProcessAnimation();
       // Reset the timer.
       timer_ = timer_ % animation_ms;
     }
@@ -269,6 +267,12 @@ void Image::ProcessEvent() {
         listener->OnMouseEvent(latest_event_);
       }
     }
+  }
+}
+
+void Image::ProcessAnimation() {
+  for (auto listener : animation_listeners_) {
+    listener->OnAnimationStep();
   }
 }
 

@@ -46,6 +46,11 @@ class TestEventGenerator {
     image_->ProcessEvent();
   }
 
+  void SendAnimationEvent() {
+    if (!image_->GetDisplayForTesting()) return;
+    image_->ProcessAnimation();
+  }
+
  private:
   graphics::Image* image_;  // Unowned
 };

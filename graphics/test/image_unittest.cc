@@ -266,6 +266,41 @@ TEST(ImageEventTest, HandlesEvents) {
   image.Hide();
 }
 
+class TestAnimationEventListener : public graphics::AnimationEventListener {
+ public:
+  TestAnimationEventListener() = default;
+  ~TestAnimationEventListener() = default;
+  void OnAnimationStep() override {
+    num_events_++;
+  }
+
+  int GetNumEvents() {
+    return num_events_;
+  }
+ private:
+  int num_events_ = 0;
+};
+
+TEST(AnimationEventTest, CallsAnimationListeners) {
+  TestAnimationEventListener listener;
+  ASSERT_EQ(0, listener.GetNumEvents());
+  graphics::Image image(50, 50);
+  graphics::TestEventGenerator generator(&image);
+  image.Show();
+
+  image.AddAnimationEventListener(listener);
+  ASSERT_EQ(0, listener.GetNumEvents());
+  generator.SendAnimationEvent();
+  ASSERT_EQ(1, listener.GetNumEvents());
+  generator.SendAnimationEvent();
+  ASSERT_EQ(2, listener.GetNumEvents());
+  image.RemoveAnimationEventListener(listener);
+
+  // Actually removed.
+  generator.SendAnimationEvent();
+  ASSERT_EQ(2, listener.GetNumEvents());
+}
+
 int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
