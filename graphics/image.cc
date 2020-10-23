@@ -258,9 +258,9 @@ void Image::ProcessEvent() {
       for (auto listener : mouse_listeners_) {
         listener->OnMouseEvent(latest_event_);
       }
-    } else if (mouse_x != latest_event_.GetX() &&
-               mouse_y != latest_event_.GetY() &&
-               mouse_x >= 0 && mouse_y >= 0) {
+    } else if ((mouse_x != latest_event_.GetX() ||
+               mouse_y != latest_event_.GetY()) &&
+              (mouse_x >= 0 && mouse_y >= 0)) {
       // Mouse position has changed, send a move.
       latest_event_ = MouseEvent(mouse_x, mouse_y, MouseAction::kMoved);
       for (auto listener : mouse_listeners_) {
