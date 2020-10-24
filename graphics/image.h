@@ -119,7 +119,7 @@ class Image {
    * Shows the image in a window with the title |title|. Returns false if
    * the image could not be shown.
    */
-  bool Show(const std::string& title) { return ShowForMs(0, "Image"); }
+  bool Show(const std::string& title) { return ShowForMs(0, title); }
 
   /**
    * Shows the image in a window for |milliseconds| duration. Returns false if
