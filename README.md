@@ -1,6 +1,6 @@
 # C++ Utils
 
-Libraries for student C++ code.
+Libraries for student C++ code available under the MIT license.
 
 ## Graphics
 
