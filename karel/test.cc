@@ -6,11 +6,15 @@ void KarelProgram() {
   TurnLeft();
   Move();
   Move();
+  PickBeeper();
+  Move();
+  PutBeeper();
+  PickBeeper();
   TurnLeft();
   Move();
+  PutBeeper();
   TurnLeft();
   Move();
-  //TurnLeft();
 }
 
 int main() {

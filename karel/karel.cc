@@ -1,16 +1,17 @@
 #include "karel.h"
 
+#include <math.h>
+
 #include <iostream>
 #include <vector>
-#include <math.h>
 
 namespace karel {
 
 enum Orientation {
-  kNorth,
-  kEast,
-  kSouth,
-  kWest,
+  kNorth = 1,
+  kEast = 2,
+  kSouth = 3,
+  kWest = 4,
 };
 
 class Cell {
@@ -49,7 +50,6 @@ class Robot {
   static karel::Robot& GetInstance() {
     static Robot instance;
     instance.Initialize();
-    instance.Show();
     return instance;
   }
 
@@ -58,6 +58,8 @@ class Robot {
   karel::Robot& operator=(const Robot&) = delete;
 
   void Initialize() {
+    if (initialized_) return;
+    initialized_ = true;
     image_.Initialize(dimen * pxPerCell, dimen * pxPerCell);
     for (int i = 0; i < dimen; i++) {
       world_.push_back(std::vector<Cell>());
@@ -125,6 +127,33 @@ class Robot {
     image_.ShowForMs(500, "Karel's World");
   }
 
+  void PutBeeper() {
+    if (!HasBeepersInBag()) {
+      // TODO error
+      return;
+    }
+    beeper_count_--;
+    world_[x_][y_].SetNumBeepers(world_[x_][y_].GetNumBeepers() + 1);
+    DrawWorld();
+    DrawRobot();
+    image_.ShowForMs(500, "Karel's World");
+  }
+
+  void PickBeeper() {
+    int count = world_[x_][y_].GetNumBeepers();
+    if (count < 1) {
+      // TODO error
+      return;
+    }
+    world_[x_][y_].SetNumBeepers(count - 1);
+    beeper_count_++;
+    DrawWorld();
+    DrawRobot();
+    image_.ShowForMs(500, "Karel's World");
+  }
+
+  bool HasBeepersInBag() { return beeper_count_ > 0; }
+
   void Finish() { image_.ShowUntilClosed("Karel's World"); }
 
  private:
@@ -143,12 +172,8 @@ class Robot {
         // trig!
         double dimen = sqrt((beeperSize / 2) * (beeperSize / 2) / 2);
         if (world_[i][j].GetNumBeepers() > 0) {
-          image_.DrawLine(x_center - dimen,
-                          y_center - dimen, x_center + dimen, y_center + dimen,
-                                beeperColor, beeperSize);
-          image_.DrawLine(x_center - dimen,
-                          y_center - dimen, x_center +dimen, y_center + dimen,
-                                beeperColor, beeperSize);
+          image_.DrawLine(x_center - dimen, y_center - dimen, x_center + dimen,
+                          y_center + dimen, beeperColor, beeperSize);
         }
         // TODO: Check for walls and draw them here in a thick darker grey.
       }
@@ -246,7 +271,9 @@ class Robot {
   int x_ = 0;
   int y_ = 9;
   Orientation orientation_ = Orientation::kEast;
+  int beeper_count_ = 0;
   std::vector<std::vector<Cell>> world_;
+  bool initialized_ = false;
 };
 
 }  // namespace karel
@@ -261,9 +288,15 @@ void TurnLeft() {
   r.TurnLeft();
 }
 
-void PutBeeper() { karel::Robot& r = karel::Robot::GetInstance(); }
+void PutBeeper() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  r.PutBeeper();
+}
 
-void PickBeeper() { karel::Robot& r = karel::Robot::GetInstance(); }
+void PickBeeper() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  r.PickBeeper();
+}
 
 void Finish() {
   karel::Robot& r = karel::Robot::GetInstance();
@@ -275,7 +308,7 @@ bool FrontIsClear() {
   return false;
 }
 
-bool BeepersPresent() {
+bool HasBeepersInBag() {
   karel::Robot& r = karel::Robot::GetInstance();
-  return false;
+  return r.HasBeepersInBag();
 }

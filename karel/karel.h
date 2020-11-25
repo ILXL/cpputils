@@ -11,7 +11,7 @@ void PickBeeper();
 
 bool FrontIsClear();
 
-bool BeepersPresent();
+bool HasBeepersInBag();
 
 // Set-up for professors?
 // https://csis.pace.edu/~bergin/KarelJava2ed/KJRdocs/kareltherobot/World.html
