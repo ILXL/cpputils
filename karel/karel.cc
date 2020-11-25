@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <math.h>
 
 namespace karel {
 
@@ -30,14 +31,18 @@ class Cell {
 
 const int dimen = 10;
 const int pxPerCell = 50;
+const int markSize = 10;
 const int robotSize = 30;
-const int beeperSize = 25;
+const int beeperSize = 30;
 const int eyeSize = 4;
-const int legLength = 4;
+const int legLength = 6;
+const int limbWidth = 5;
 const graphics::Color eyeColor(50, 50, 50);
 const graphics::Color karelColor(125, 125, 125);
-const graphics::Color markColor(50, 50, 255);
-const graphics::Color beeperColor(200, 0, 200);
+const graphics::Color markColor(150, 150, 255);
+const graphics::Color beeperColor(172, 147, 194);
+const graphics::Color limbColor(105, 105, 105);
+const graphics::Color kWhite(255, 255, 255);
 
 class Robot {
  public:
@@ -63,7 +68,7 @@ class Robot {
     world_[5][3].SetNumBeepers(1);
     world_[2][7].SetNumBeepers(1);
     DrawWorld();
-    DrawRobot(x_ * pxPerCell + robotSize / 2, y_ * pxPerCell + robotSize / 2);
+    DrawRobot(x_ * pxPerCell + pxPerCell / 2, y_ * pxPerCell + pxPerCell / 2);
     image_.ShowForMs(500, "Karel's World");
   }
 
@@ -126,23 +131,26 @@ class Robot {
   Robot() {}
 
   void DrawWorld() {
-    // TODO draw the beepers and cells
-    image_.DrawRectangle(0, 0, dimen * pxPerCell, dimen * pxPerCell,
-                         graphics::Color(255, 255, 255));
+    image_.DrawRectangle(0, 0, dimen * pxPerCell, dimen * pxPerCell, kWhite);
     for (int i = 0; i < dimen; i++) {
       for (int j = 0; j < dimen; j++) {
         int x_center = i * pxPerCell + pxPerCell / 2;
         int y_center = j * pxPerCell + pxPerCell / 2;
-        image_.DrawLine(x_center - robotSize / 2, y_center,
-                        x_center + robotSize / 2, y_center, markColor, 3);
-        image_.DrawLine(x_center, y_center - robotSize / 2, x_center,
-                        y_center + robotSize / 2, graphics::Color(0, 0, 255),
-                        3);
+        image_.DrawLine(x_center - markSize / 2, y_center,
+                        x_center + markSize / 2, y_center, markColor, 3);
+        image_.DrawLine(x_center, y_center - markSize / 2, x_center,
+                        y_center + markSize / 2, markColor, 3);
+        // trig!
+        double dimen = sqrt((beeperSize / 2) * (beeperSize / 2) / 2);
         if (world_[i][j].GetNumBeepers() > 0) {
-          image_.DrawRectangle(x_center - beeperSize / 2,
-                               y_center - beeperSize / 2, beeperSize,
-                               beeperSize, beeperColor);
+          image_.DrawLine(x_center - dimen,
+                          y_center - dimen, x_center + dimen, y_center + dimen,
+                                beeperColor, beeperSize);
+          image_.DrawLine(x_center - dimen,
+                          y_center - dimen, x_center +dimen, y_center + dimen,
+                                beeperColor, beeperSize);
         }
+        // TODO: Check for walls and draw them here in a thick darker grey.
       }
     }
     for (int i = 0; i < dimen; i++) {
@@ -154,39 +162,69 @@ class Robot {
   }
 
   void DrawRobot() {
-    DrawRobot(x_ * pxPerCell + robotSize / 2, y_ * pxPerCell + robotSize / 2);
+    // Center in the cell.
+    DrawRobot(x_ * pxPerCell + pxPerCell / 2, y_ * pxPerCell + pxPerCell / 2);
   }
 
+  // pixel_x and pixel_y are the center of the cell in pixels.
   void DrawRobot(int pixel_x, int pixel_y) {
-    image_.DrawRectangle(pixel_x, pixel_y, robotSize, robotSize, karelColor);
-    image_.DrawCircle(pixel_x + robotSize / 2, pixel_y + robotSize / 2, eyeSize,
-                      eyeColor);
+    image_.DrawRectangle(pixel_x - robotSize / 2, pixel_y - robotSize / 2,
+                         robotSize, robotSize, karelColor);
     switch (orientation_) {
       case Orientation::kNorth:
-        image_.DrawCircle(pixel_x + robotSize / 2, pixel_y + 2, eyeSize,
-                          eyeColor);
+        image_.DrawCircle(pixel_x, pixel_y - robotSize / 2 + eyeSize / 2 + 1,
+                          eyeSize, kWhite);
+        image_.DrawCircle(pixel_x, pixel_y + 1, eyeSize, kWhite);
+        image_.DrawCircle(pixel_x, pixel_y - robotSize / 2 + eyeSize / 2,
+                          eyeSize, eyeColor);
+        image_.DrawLine(pixel_x + robotSize / 2, pixel_y - legLength,
+                        pixel_x + robotSize / 2 + legLength,
+                        pixel_y - legLength, limbColor, limbWidth);
+        image_.DrawLine(pixel_x + robotSize / 2, pixel_y + legLength,
+                        pixel_x + robotSize / 2 + legLength,
+                        pixel_y + legLength, limbColor, limbWidth);
         break;
       case Orientation::kEast:
-        image_.DrawCircle(pixel_x + robotSize - 2, pixel_y + robotSize / 2,
+        image_.DrawCircle(pixel_x - 1, pixel_y, eyeSize, kWhite);
+        image_.DrawCircle(pixel_x + robotSize / 2 - eyeSize / 2 - 1, pixel_y,
+                          eyeSize, kWhite);
+        image_.DrawCircle(pixel_x + robotSize / 2 - eyeSize / 2, pixel_y,
                           eyeSize, eyeColor);
-        image_.DrawLine(pixel_x + robotSize / 2 - legLength,
-                        pixel_y + robotSize,
-                        pixel_x + robotSize / 2 - legLength,
-                        pixel_y + robotSize + legLength, karelColor, 5);
-        image_.DrawLine(pixel_x + robotSize / 2 + legLength,
-                        pixel_y + robotSize,
-                        pixel_x + robotSize / 2 + legLength,
-                        pixel_y + robotSize + legLength, karelColor, 5);
+        image_.DrawLine(
+            pixel_x - legLength, pixel_y + robotSize / 2, pixel_x - legLength,
+            pixel_y + robotSize / 2 + legLength, limbColor, limbWidth);
+        image_.DrawLine(
+            pixel_x + legLength, pixel_y + robotSize / 2, pixel_x + legLength,
+            pixel_y + robotSize / 2 + legLength, limbColor, limbWidth);
         break;
       case Orientation::kSouth:
-        image_.DrawCircle(pixel_x + robotSize / 2, pixel_y + robotSize - 2,
+        image_.DrawCircle(pixel_x, pixel_y + robotSize / 2 - eyeSize / 2 - 1,
+                          eyeSize, kWhite);
+        image_.DrawCircle(pixel_x, pixel_y - 1, eyeSize, kWhite);
+        image_.DrawCircle(pixel_x, pixel_y + robotSize / 2 - eyeSize / 2,
                           eyeSize, eyeColor);
+        image_.DrawLine(pixel_x - robotSize / 2, pixel_y - legLength,
+                        pixel_x - robotSize / 2 - legLength,
+                        pixel_y - legLength, limbColor, limbWidth);
+        image_.DrawLine(pixel_x - robotSize / 2, pixel_y + legLength,
+                        pixel_x - robotSize / 2 - legLength,
+                        pixel_y + legLength, limbColor, limbWidth);
         break;
       case Orientation::kWest:
-        image_.DrawCircle(pixel_x + 2, pixel_y + robotSize / 2, eyeSize,
-                          eyeColor);
+        image_.DrawCircle(pixel_x + 1, pixel_y, eyeSize, kWhite);
+        image_.DrawCircle(pixel_x - robotSize / 2 + eyeSize / 2 + 1, pixel_y,
+                          eyeSize, kWhite);
+        image_.DrawCircle(pixel_x - robotSize / 2 + eyeSize / 2, pixel_y,
+                          eyeSize, eyeColor);
+        image_.DrawLine(
+            pixel_x - legLength, pixel_y - robotSize / 2, pixel_x - legLength,
+            pixel_y - robotSize / 2 - legLength, limbColor, limbWidth);
+        image_.DrawLine(
+            pixel_x + legLength, pixel_y - robotSize / 2, pixel_x + legLength,
+            pixel_y - robotSize / 2 - legLength, limbColor, limbWidth);
         break;
     }
+    image_.DrawCircle(pixel_x, pixel_y, eyeSize, eyeColor);
   }
 
   void AnimateMove(int next_x, int next_y) {
@@ -196,7 +234,7 @@ class Robot {
       double fraction = i * 1.0 / steps;
       double x = x_ * (1 - fraction) + next_x * fraction;
       double y = y_ * (1 - fraction) + next_y * fraction;
-      DrawRobot(x * pxPerCell + robotSize / 2, y * pxPerCell + robotSize / 2);
+      DrawRobot(x * pxPerCell + pxPerCell / 2, y * pxPerCell + pxPerCell / 2);
       image_.ShowForMs(60, "Karel's World");
     }
     x_ = next_x;

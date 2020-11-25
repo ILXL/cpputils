@@ -3,16 +3,14 @@
 void KarelProgram() {
   Move();
   Move();
-  Move();
   TurnLeft();
   Move();
   Move();
   TurnLeft();
-  // Move();
-  // Move();
-  // TurnLeft();
-  // Move();
-  // TurnLeft();
+  Move();
+  TurnLeft();
+  Move();
+  //TurnLeft();
 }
 
 int main() {
