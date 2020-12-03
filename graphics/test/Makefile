@@ -6,19 +6,49 @@
 
 .PHONY: update_cimg image_unittest
 
+OS_NAME 				:= $(shell uname -s | tr A-Z a-z)
+SHELL         		:= /bin/bash
+HAS_GTEST       := $(shell echo -e "int main() { }" >> test.cc ; clang++ test.cc -o test -lgtest 2> /dev/null; echo $$?; rm -f test.cc test;)
+COMPILE_FLAGS 	:= -lm -lX11 -lpthread
+
+ifeq ($(OS_NAME), darwin)
+	COMPILE_FLAGS	:= -lm -lpthread -lX11 -I/usr/X11R6/include -L/usr/X11R6/lib
+	HAS_BREW	:= $(shell command -v brew 2> /dev/null)
+endif
+
 update_cimg:
 	@echo -e "Getting CImg..."
 	@wget -q https://raw.githubusercontent.com/dtschump/CImg/master/CImg.h
 	@mv CImg.h ../cimg/
 	@echo -e "CImg updated"
 
-/usr/lib/libgtest.a:
-	@echo -e "google test library not installed\n"
+install_gtest:
+ifeq ($(HAS_GTEST),1)
+	@echo -e "google test not installed\n"
+ifeq ($(OS_NAME), darwin)
+ifndef ($(HAS_BREW))
+	@echo -e "Installing brew, please provide your password when asked.\n"
+	@/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+	@brew install coreutils
+	# Need to redefine the path directories otherwise this will fail the first time.
+endif
+	@echo -e "Installing cmake. Please provide the password when asked\n"
+	@brew install cmake
+	@echo -e "\nDownloading and installing googletest\n"
+	@cd /tmp/; git clone https://github.com/google/googletest; cd googletest; mkdir build; cd build; cmake .. -DCMAKE_CXX_STANDARD=17; make; make install
+	@echo -e "Finished installing google test\n"
+else
+ifneq ($(shell lsb_release -sr), 20.04)
+	@cd /tmp/; git clone https://github.com/google/googletest.git; cd googletest; cmake CMakeLists.txt; make; sudo cp -r googletest/include/. /usr/include; sudo cp -r googlemock/include/. /usr/include; sudo cp lib/*.a /usr/lib
+else
 	@echo -e "Installing cmake. Please provide the password when asked\n"
 	@sudo apt-get install cmake # install cmake
 	@echo -e "\nDownloading and installing googletest\n"
-	@cd /tmp/; git clone https://github.com/google/googletest.git; cd googletest; cmake CMakeLists.txt; make; sudo cp -r googletest/include/. /usr/include; sudo cp -r googlemock/include/. /usr/include; sudo cp lib/*.a /usr/lib
-	@echo -e "Finished installing google test library\n"
+	@sudo apt-get install libgtest-dev libgmock-dev
+	@echo -e "Finished installing google test\n"
+endif
+endif
+endif
 
-image_unittest: /usr/lib/libgtest.a
-	@clang++ -std=c++17 ../image.cc image_unittest.cc -o image_unittest -pthread -lgtest -lm -lX11 -lpthread && ./image_unittest
+image_unittest: install_gtest
+	@clang++ -std=c++17 ../image.cc image_unittest.cc -o image_unittest -pthread -lgtest $(COMPILE_FLAGS) && ./image_unittest
