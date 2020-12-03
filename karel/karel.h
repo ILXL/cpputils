@@ -20,3 +20,5 @@ void SetDimensions(int width, int height);
 void PlaceBeeperAt(int x, int y);
 
 void Finish();
+
+void LoadWorld(std::string filename);
