@@ -27,7 +27,7 @@ class Cell {
   int GetNumBeepers() const { return num_beepers_; }
   void SetNumBeepers(int beepers) { num_beepers_ = beepers; }
   bool HasNorthWall() const { return north_wall_; }
-  bool HasEastWall() const { return south_wall_; }
+  bool HasEastWall() const { return east_wall_; }
   bool HasSouthWall() const { return south_wall_; }
   bool HasWestWall() const { return west_wall_; }
   void AddWall(Orientation wall_orientation) {
@@ -161,23 +161,35 @@ class Robot {
           PositionAndOrientation wall = ParsePositionAndOrientation(world_file);
           world_[wall.x][wall.y].AddWall(wall.orientation);
         } else if (line_prefix == beeper_prefix) {
-          int x, y, count;
-          world_file >> open_paren >> x >> comma >> y >> closed_paren >> count;
-          world_[x][y].SetNumBeepers(count);
+          PositionAndOrientation beeper = ParsePosition(world_file);
+          int count;
+          if (!(world_file >> count)) {
+            throw std::string("Error reading Beeper count");
+          }
+          world_[beeper.x][beeper.y].SetNumBeepers(count);
         } else if (line_prefix == bag_prefix) {
           std::string beepers;
-          world_file >> beepers;
-          if (beepers == "INFINITY") {
+          if (!(world_file >> beepers)) {
+            throw std::string("Error reading quantity for BeeperBag");
+          }
+          if (beepers == "INFINITY" || beepers == "INFINITE") {
             beeper_count_ = std::numeric_limits<int>::max();
           } else {
-            beeper_count_ = stoi(beepers);
+            try {
+              beeper_count_ = stoi(beepers);
+            } catch (std::invalid_argument& e) {
+              throw std::string("Unknown BeeperBag quanity, " + beepers);
+            }
           }
         } else if (line_prefix == karel_prefix) {
           position_ = ParsePositionAndOrientation(world_file);
         } else if (line_prefix == speed_prefix) {
-          world_file >> speed_;
+          if (!(world_file >> speed_)) {
+            throw std::string("Error reading Speed");
+          }
         } else {
-          std::cout << "unexpected token in file: " << line_prefix << std::endl;
+          std::cout << "unexpected token in file: " << line_prefix << std::endl
+                    << std::flush;
           break;
         }
       }
@@ -312,13 +324,22 @@ class Robot {
         }
         // Draw the walls.
         if (cell.HasNorthWall()) {
-          image_.DrawLine(i * pxPerCell, j * pxPerCell, (i + 1) * pxPerCell, j * pxPerCell, kWallColor, kWallThickness);
-        } else if (cell.HasSouthWall()) {
-          image_.DrawLine(i * pxPerCell, (j + 1) * pxPerCell, (i + 1) * pxPerCell, (j + 1) * pxPerCell, kWallColor, kWallThickness);
-        } else if (cell.HasWestWall()) {
-          image_.DrawLine(i * pxPerCell, j * pxPerCell, i * pxPerCell, (j + 1) * pxPerCell, kWallColor, kWallThickness);
-        } else if (cell.HasEastWall()) {
-          image_.DrawLine((i + 1) * pxPerCell, j * pxPerCell, (i + 1) * pxPerCell, (j + 1) * pxPerCell, kWallColor, kWallThickness);
+          image_.DrawLine(i * pxPerCell, j * pxPerCell, (i + 1) * pxPerCell - 1,
+                          j * pxPerCell, kWallColor, kWallThickness);
+        }
+        if (cell.HasSouthWall()) {
+          image_.DrawLine(i * pxPerCell, (j + 1) * pxPerCell - 1,
+                          (i + 1) * pxPerCell - 1, (j + 1) * pxPerCell - 1, kWallColor,
+                          kWallThickness);
+        }
+        if (cell.HasWestWall()) {
+          image_.DrawLine(i * pxPerCell, j * pxPerCell, i * pxPerCell,
+                          (j + 1) * pxPerCell - 1, kWallColor, kWallThickness);
+        }
+        if (cell.HasEastWall()) {
+          image_.DrawLine((i + 1) * pxPerCell - 1, j * pxPerCell,
+                          (i + 1) * pxPerCell - 1, (j + 1) * pxPerCell - 1, kWallColor,
+                          kWallThickness);
         }
       }
     }
@@ -406,17 +427,28 @@ class Robot {
     Show(kLongDuration);
   }
 
-  PositionAndOrientation ParsePositionAndOrientation(std::fstream& file) {
-    std::string direction;
+  // Note that the orientation is unused.
+  PositionAndOrientation ParsePosition(std::fstream& file) {
     char open_paren, comma, closed_paren;
     int x, y;
-    file >> open_paren >> x >> comma >> y >> closed_paren >> direction;
+    if (!(file >> open_paren >> x >> comma >> y >> closed_paren)) {
+      throw std::string("Error reading position");
+    }
+    PositionAndOrientation result;
     // Convert y in the file to y on-screen. In the file, (1, 1) is the
     // bottom left corner.
     // In Karel coordinates, that's (0, y_dimen - 1).
-    PositionAndOrientation result;
     result.y = y_dimen_ - y;
     result.x = x - 1;
+    return result;
+  }
+
+  PositionAndOrientation ParsePositionAndOrientation(std::fstream& file) {
+    PositionAndOrientation result = ParsePosition(file);
+    std::string direction;
+    if (!(file >> direction)) {
+      throw std::string("Error reading orientation");
+    }
     // Ensure the first character is lower cased.
     direction[0] = tolower(direction[0]);
     if (direction == "north") {
@@ -428,7 +460,7 @@ class Robot {
     } else if (direction == "west") {
       result.orientation = Orientation::kWest;
     } else {
-      throw std::string("Unknown direction " + direction);
+      throw std::string("Unknown orientation " + direction);
     }
     return result;
   }

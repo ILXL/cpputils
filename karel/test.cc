@@ -18,9 +18,9 @@ void KarelProgram() {
 }
 
 int main() {
-  LoadWorld("worlds/CollectNewspaperKarel.w");
+  //LoadWorld("worlds/CollectNewspaperKarel.w");
   // LoadWorld("worlds/8x8.w");
-  //LoadWorld("worlds/StoneMasonKarel.w");
+  LoadWorld("worlds/StoneMasonKarel.w");
   KarelProgram();
   Finish();
   return 0;
