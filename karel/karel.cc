@@ -16,6 +16,12 @@ enum Orientation {
   kWest = 4,
 };
 
+struct PositionAndOrientation {
+  int x = 0;
+  int y = 0;
+  Orientation orientation = Orientation::kNorth;
+};
+
 class Cell {
  public:
   int GetNumBeepers() const { return num_beepers_; }
@@ -24,10 +30,22 @@ class Cell {
   bool HasEastWall() const { return south_wall_; }
   bool HasSouthWall() const { return south_wall_; }
   bool HasWestWall() const { return west_wall_; }
-  void SetHasNorthWall(bool has_wall) { north_wall_ = has_wall; }
-  void SetHasEastWall(bool has_wall) { south_wall_ = has_wall; }
-  void SetHasSouthWall(bool has_wall) { south_wall_ = has_wall; }
-  void SetHasWestWall(bool has_wall) { west_wall_ = has_wall; }
+  void AddWall(Orientation wall_orientation) {
+    switch (wall_orientation) {
+      case kNorth:
+        north_wall_ = true;
+        break;
+      case kEast:
+        east_wall_ = true;
+        break;
+      case kSouth:
+        south_wall_ = true;
+        break;
+      case kWest:
+        west_wall_ = true;
+        break;
+    }
+  }
 
  private:
   bool num_beepers_ = 0;
@@ -51,12 +69,14 @@ const int beeperSize = 30;
 const int eyeSize = 4;
 const int legLength = 6;
 const int limbWidth = 5;
+const int kWallThickness = 3;
 const graphics::Color eyeColor(50, 50, 50);
 const graphics::Color karelColor(125, 125, 125);
 const graphics::Color markColor(150, 150, 255);
 const graphics::Color beeperColor(172, 147, 194);
 const graphics::Color limbColor(105, 105, 105);
 const graphics::Color kWhite(255, 255, 255);
+const graphics::Color kWallColor(125, 125, 125);
 
 class Robot {
  public:
@@ -100,8 +120,8 @@ class Robot {
       }
       // Nearly infinite beepers.
       beeper_count_ = std::numeric_limits<int>::max();
-      x_ = 0;
-      y_ = y_dimen_ - 1;
+      position_.x = 0;
+      position_.y = y_dimen_ - 1;
     } else {
       std::fstream world_file;
       world_file.open(filename);
@@ -135,13 +155,15 @@ class Robot {
       }
 
       // Read the rest of the file to get beepers and walls.
-      // May need better error checking.
+      // TODO: May need better error checking.
       while (world_file >> line_prefix) {
         if (line_prefix == wall_prefix) {
-            std::cout << "wall " << std::endl;
+          PositionAndOrientation wall = ParsePositionAndOrientation(world_file);
+          world_[wall.x][wall.y].AddWall(wall.orientation);
         } else if (line_prefix == beeper_prefix) {
-          // TODO
-          std::cout << "beeper in cell " << std::endl;
+          int x, y, count;
+          world_file >> open_paren >> x >> comma >> y >> closed_paren >> count;
+          world_[x][y].SetNumBeepers(count);
         } else if (line_prefix == bag_prefix) {
           std::string beepers;
           world_file >> beepers;
@@ -150,50 +172,22 @@ class Robot {
           } else {
             beeper_count_ = stoi(beepers);
           }
-          std::cout << "num beepers set to " << beeper_count_;
         } else if (line_prefix == karel_prefix) {
-            std::cout << "karel_prefix " << std::endl;
-
-            // set x, y and direction
+          position_ = ParsePositionAndOrientation(world_file);
         } else if (line_prefix == speed_prefix) {
-           world_file >> speed_;
-           std::cout << "Speed set to " << speed_;
+          world_file >> speed_;
         } else {
-            std::cout << "Default?? " << line_prefix << std::endl;
-            break;
+          std::cout << "unexpected token in file: " << line_prefix << std::endl;
+          break;
         }
       }
-
-      // if (!getline(world_file, line)) {
-      //   throw std::string("File " + filename + " is empty.");
-      // }
-      // size_t dimension_index = line.find(dimension_prefix);
-      // if (dimension_index != std::string::npos) {
-      //   std::string dimension_suffix = line.substr(dimension_prefix.size());
-      //
-      // } else {
-      //   // Error: first line should be dimension.
-      //   throw std::string("Could not find Dimension in first line");
-      // }
-
-      // example worlds:
-      // https://github.com/thisdotrob/karel-the-robot/tree/master/worlds
-
-      // get walls and beepers from file (optional in file)
-
-      // karel initial state
-      x_ = 2;  // from file but map x + y and dimen_ - y
-      y_ = y_dimen_ - 3;
-
-      // get speed from file too.
-      speed_ = 1.25;
       world_file.close();
     }
-
     image_.Initialize(x_dimen_ * pxPerCell, y_dimen_ * pxPerCell);
 
     DrawWorld();
-    DrawRobot(x_ * pxPerCell + pxPerCell / 2, y_ * pxPerCell + pxPerCell / 2);
+    DrawRobot(position_.x * pxPerCell + pxPerCell / 2,
+              position_.y * pxPerCell + pxPerCell / 2);
     Show(kLongDuration);
   }
 
@@ -202,48 +196,48 @@ class Robot {
   }
 
   void Move() {
-    switch (orientation_) {
+    switch (position_.orientation) {
       case Orientation::kNorth:
-        if (y_ == 0) {
+        if (position_.y == 0) {
           // Cannot move any further. draw an error.
         } else {
-          AnimateMove(x_, y_ - 1);
+          AnimateMove(position_.x, position_.y - 1);
         }
         break;
       case Orientation::kEast:
-        if (x_ == x_dimen_ - 1) {
+        if (position_.x == x_dimen_ - 1) {
         } else {
-          AnimateMove(x_ + 1, y_);
+          AnimateMove(position_.x + 1, position_.y);
         }
         break;
       case Orientation::kSouth:
-        if (y_ == y_dimen_ - 1) {
+        if (position_.y == y_dimen_ - 1) {
         } else {
-          AnimateMove(x_, y_ + 1);
+          AnimateMove(position_.x, position_.y + 1);
         }
         break;
       case Orientation::kWest:
-        if (x_ == 0) {
+        if (position_.x == 0) {
         } else {
-          AnimateMove(x_ - 1, y_);
+          AnimateMove(position_.x - 1, position_.y);
         }
         break;
     }
   }
 
   void TurnLeft() {
-    switch (orientation_) {
+    switch (position_.orientation) {
       case Orientation::kNorth:
-        orientation_ = Orientation::kWest;
+        position_.orientation = Orientation::kWest;
         break;
       case Orientation::kEast:
-        orientation_ = Orientation::kNorth;
+        position_.orientation = Orientation::kNorth;
         break;
       case Orientation::kSouth:
-        orientation_ = Orientation::kEast;
+        position_.orientation = Orientation::kEast;
         break;
       case Orientation::kWest:
-        orientation_ = Orientation::kSouth;
+        position_.orientation = Orientation::kSouth;
         break;
     }
     DrawWorld();
@@ -257,19 +251,20 @@ class Robot {
       return;
     }
     beeper_count_--;
-    world_[x_][y_].SetNumBeepers(world_[x_][y_].GetNumBeepers() + 1);
+    world_[position_.x][position_.y].SetNumBeepers(
+        world_[position_.x][position_.y].GetNumBeepers() + 1);
     DrawWorld();
     DrawRobot();
     Show(kLongDuration);
   }
 
   void PickBeeper() {
-    int count = world_[x_][y_].GetNumBeepers();
+    int count = world_[position_.x][position_.y].GetNumBeepers();
     if (count < 1) {
       // TODO error
       return;
     }
-    world_[x_][y_].SetNumBeepers(count - 1);
+    world_[position_.x][position_.y].SetNumBeepers(count - 1);
     beeper_count_++;
     DrawWorld();
     DrawRobot();
@@ -286,24 +281,6 @@ class Robot {
   void DrawWorld() {
     image_.DrawRectangle(0, 0, x_dimen_ * pxPerCell, y_dimen_ * pxPerCell,
                          kWhite);
-    for (int i = 0; i < x_dimen_; i++) {
-      for (int j = 0; j < y_dimen_; j++) {
-        int x_center = i * pxPerCell + pxPerCell / 2;
-        int y_center = j * pxPerCell + pxPerCell / 2;
-        image_.DrawLine(x_center - markSize / 2, y_center,
-                        x_center + markSize / 2, y_center, markColor, 3);
-        image_.DrawLine(x_center, y_center - markSize / 2, x_center,
-                        y_center + markSize / 2, markColor, 3);
-        // trig!
-        double line_size = sqrt((beeperSize / 2) * (beeperSize / 2) / 2);
-        if (world_[i][j].GetNumBeepers() > 0) {
-          image_.DrawLine(x_center - line_size, y_center - line_size,
-                          x_center + line_size, y_center + line_size,
-                          beeperColor, beeperSize);
-        }
-        // TODO: Check for walls and draw them here in a thick darker grey.
-      }
-    }
     for (int i = 0; i < y_dimen_; i++) {
       // Draw horizontal lines.
       image_.DrawLine(0, i * pxPerCell, pxPerCell * x_dimen_ - 1, i * pxPerCell,
@@ -314,18 +291,50 @@ class Robot {
       image_.DrawLine(i * pxPerCell, 0, i * pxPerCell, pxPerCell * y_dimen_ - 1,
                       graphics::Color(200, 200, 200));
     }
+    for (int i = 0; i < x_dimen_; i++) {
+      for (int j = 0; j < y_dimen_; j++) {
+        int x_center = i * pxPerCell + pxPerCell / 2;
+        int y_center = j * pxPerCell + pxPerCell / 2;
+        // Draw the little plus at the center of the cell.
+        image_.DrawLine(x_center - markSize / 2, y_center,
+                        x_center + markSize / 2, y_center, markColor, 3);
+        image_.DrawLine(x_center, y_center - markSize / 2, x_center,
+                        y_center + markSize / 2, markColor, 3);
+        // trig!
+        double line_size = sqrt((beeperSize / 2) * (beeperSize / 2) / 2);
+        Cell& cell = world_[i][j];
+        if (cell.GetNumBeepers() > 0) {
+          // Draw the beepers. Beepers are stacked so you can't tell if there's
+          // more than one in a stack.
+          image_.DrawLine(x_center - line_size, y_center - line_size,
+                          x_center + line_size, y_center + line_size,
+                          beeperColor, beeperSize);
+        }
+        // Draw the walls.
+        if (cell.HasNorthWall()) {
+          image_.DrawLine(i * pxPerCell, j * pxPerCell, (i + 1) * pxPerCell, j * pxPerCell, kWallColor, kWallThickness);
+        } else if (cell.HasSouthWall()) {
+          image_.DrawLine(i * pxPerCell, (j + 1) * pxPerCell, (i + 1) * pxPerCell, (j + 1) * pxPerCell, kWallColor, kWallThickness);
+        } else if (cell.HasWestWall()) {
+          image_.DrawLine(i * pxPerCell, j * pxPerCell, i * pxPerCell, (j + 1) * pxPerCell, kWallColor, kWallThickness);
+        } else if (cell.HasEastWall()) {
+          image_.DrawLine((i + 1) * pxPerCell, j * pxPerCell, (i + 1) * pxPerCell, (j + 1) * pxPerCell, kWallColor, kWallThickness);
+        }
+      }
+    }
   }
 
   void DrawRobot() {
     // Center in the cell.
-    DrawRobot(x_ * pxPerCell + pxPerCell / 2, y_ * pxPerCell + pxPerCell / 2);
+    DrawRobot(position_.x * pxPerCell + pxPerCell / 2,
+              position_.y * pxPerCell + pxPerCell / 2);
   }
 
   // pixel_x and pixel_y are the center of the cell in pixels.
   void DrawRobot(int pixel_x, int pixel_y) {
     image_.DrawRectangle(pixel_x - robotSize / 2, pixel_y - robotSize / 2,
                          robotSize, robotSize, karelColor);
-    switch (orientation_) {
+    switch (position_.orientation) {
       case Orientation::kNorth:
         image_.DrawCircle(pixel_x, pixel_y - robotSize / 2 + eyeSize / 2 + 1,
                           eyeSize, kWhite);
@@ -387,22 +396,47 @@ class Robot {
     for (int i = 1; i <= steps; i++) {
       DrawWorld();
       double fraction = i * 1.0 / steps;
-      double x = x_ * (1 - fraction) + next_x * fraction;
-      double y = y_ * (1 - fraction) + next_y * fraction;
+      double x = position_.x * (1 - fraction) + next_x * fraction;
+      double y = position_.y * (1 - fraction) + next_y * fraction;
       DrawRobot(x * pxPerCell + pxPerCell / 2, y * pxPerCell + pxPerCell / 2);
       Show(kShortDuration);
     }
-    x_ = next_x;
-    y_ = next_y;
+    position_.x = next_x;
+    position_.y = next_y;
     Show(kLongDuration);
+  }
+
+  PositionAndOrientation ParsePositionAndOrientation(std::fstream& file) {
+    std::string direction;
+    char open_paren, comma, closed_paren;
+    int x, y;
+    file >> open_paren >> x >> comma >> y >> closed_paren >> direction;
+    // Convert y in the file to y on-screen. In the file, (1, 1) is the
+    // bottom left corner.
+    // In Karel coordinates, that's (0, y_dimen - 1).
+    PositionAndOrientation result;
+    result.y = y_dimen_ - y;
+    result.x = x - 1;
+    // Ensure the first character is lower cased.
+    direction[0] = tolower(direction[0]);
+    if (direction == "north") {
+      result.orientation = Orientation::kNorth;
+    } else if (direction == "east") {
+      result.orientation = Orientation::kEast;
+    } else if (direction == "south") {
+      result.orientation = Orientation::kSouth;
+    } else if (direction == "west") {
+      result.orientation = Orientation::kWest;
+    } else {
+      throw std::string("Unknown direction " + direction);
+    }
+    return result;
   }
 
   graphics::Image image_;
   int x_dimen_ = kDefaultDimen;
   int y_dimen_ = kDefaultDimen;
-  int x_ = 0;
-  int y_ = y_dimen_ - 1;
-  Orientation orientation_ = Orientation::kEast;
+  PositionAndOrientation position_ = {0, y_dimen_ - 1, Orientation::kEast};
   int beeper_count_ = 0;
   std::vector<std::vector<Cell>> world_;
   bool initialized_ = false;
