@@ -4,13 +4,15 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
+#include "image.h"
+
 #include <assert.h>
+
 #include <iostream>
 #include <memory>
 #include <string>
 
 #include "cimg/CImg.h"
-#include "image.h"
 
 using std::cout;
 using std::endl;
@@ -167,8 +169,8 @@ bool Image::SetBlue(int x, int y, int b) { return SetPixel(x, y, 2, b); }
 bool Image::DrawLine(int x0, int y0, int x1, int y1, int red, int green,
                      int blue, int thickness) {
   const int color[] = {red, green, blue};
-  if (thickness < 1 || !CheckPixelInBounds(x0, y0) || !CheckPixelInBounds(x1, y1) ||
-      !CheckColorInBounds(color)) {
+  if (thickness < 1 || !CheckPixelInBounds(x0, y0) ||
+      !CheckPixelInBounds(x1, y1) || !CheckColorInBounds(color)) {
     return false;
   }
   if (x0 == x1 && y0 == y1) {
@@ -178,6 +180,18 @@ bool Image::DrawLine(int x0, int y0, int x1, int y1, int red, int green,
     cimage_->draw_line(x0, y0, x1, y1, color);
     return true;
   }
+
+  // Swap x0 and y0 with x1 and y1 so the lower x goes first.
+  // Fixes test DrawsLinesWithThicknessOrderDoesntMatter.
+  if (x1 < x0) {
+    int x_tmp = x1;
+    int y_tmp = y1;
+    x1 = x0;
+    y1 = y0;
+    x0 = x_tmp;
+    y0 = y_tmp;
+  }
+
   // Use CImage::draw_polygon to draw a thick line.
   const double diff_x = x0 - x1;
   const double diff_y = y0 - y1;
@@ -265,8 +279,8 @@ void Image::ProcessEvent() {
         listener->OnMouseEvent(latest_event_);
       }
     } else if ((mouse_x != latest_event_.GetX() ||
-               mouse_y != latest_event_.GetY()) &&
-              (mouse_x >= 0 && mouse_y >= 0)) {
+                mouse_y != latest_event_.GetY()) &&
+               (mouse_x >= 0 && mouse_y >= 0)) {
       // Mouse position has changed, send a move.
       latest_event_ = MouseEvent(mouse_x, mouse_y, MouseAction::kMoved);
       for (auto listener : mouse_listeners_) {

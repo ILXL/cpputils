@@ -4,11 +4,13 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
+#include "../image.h"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+
 #include <string>
 
-#include "../image.h"
 #include "image_test_utils.h"
 #include "test_event_generator.h"
 
@@ -18,7 +20,7 @@ TEST(ImageTest, CreatesImageWithoutCrashing) {
 
 TEST(ImageTest, LoadsImageWithoutCrashing) {
   graphics::Image image;
-  image.Load("example_fractal_tree.png");
+  image.Load("example_bmp.bmp");
   EXPECT_TRUE(image.GetWidth() > 0);
   EXPECT_TRUE(image.GetHeight() > 0);
 }
@@ -174,6 +176,8 @@ TEST(ImageTest, DrawsLinesWithThickness) {
   remove("DrawsLinesWithThicknessHorizontal.bmp");
   remove("DrawsLinesWithThicknessVertical.bmp");
 
+  // Use an odd size thickness. Even size thickness isn't evenly divisible
+  // by 2, meaning we can't create a rectangle of the right size.
   int thickness = 21;
   int size = 100;
   graphics::Color blue(0, 0, 255);
@@ -184,17 +188,19 @@ TEST(ImageTest, DrawsLinesWithThickness) {
   // Horizontal rectangle is the same as a thick line.
   expected.DrawRectangle(10, 40, 81, thickness, blue);
   actual.DrawLine(10, 50, 90, 50, blue, thickness);
-  EXPECT_TRUE(ImagesMatch(&expected, &actual, "DrawsLinesWithThicknessHorizontal.bmp",
-      DiffType::kTypeHighlight));
+  EXPECT_TRUE(ImagesMatch(&expected, &actual,
+                          "DrawsLinesWithThicknessHorizontal.bmp",
+                          DiffType::kTypeHighlight));
 
   // Vertical rectangle is the same as a thick line.
   expected.DrawRectangle(40, 5, thickness, 91, blue);
   actual.DrawLine(50, 5, 50, 95, blue, thickness);
-  EXPECT_TRUE(ImagesMatch(&expected, &actual, "DrawsLinesWithThicknessVertical.bmp",
-      DiffType::kTypeHighlight));
+  EXPECT_TRUE(ImagesMatch(&expected, &actual,
+                          "DrawsLinesWithThicknessVertical.bmp",
+                          DiffType::kTypeHighlight));
 
-  // 45 degree rectangle is as thick as expected. Check some points that wouldn't be
-  // colored unless the line had appropriate thickness.
+  // 45 degree rectangle is as thick as expected. Check some points that
+  // wouldn't be colored unless the line had appropriate thickness.
   graphics::Color green(0, 255, 0);
   actual.DrawLine(0, 0, size - 1, size - 1, green, thickness);
   EXPECT_EQ(actual.GetColor(thickness / 2, 0), green);
@@ -203,7 +209,69 @@ TEST(ImageTest, DrawsLinesWithThickness) {
   EXPECT_EQ(actual.GetColor(size / 2, size / 2 + thickness / 2), green);
 
   // But not too wide!
-  EXPECT_NE(actual.GetColor(size / 2, size / 2 + std::sqrt(2 * thickness * thickness)), green);
+  EXPECT_NE(actual.GetColor(size / 2,
+                            size / 2 + std::sqrt(2 * thickness * thickness)),
+            green);
+}
+
+TEST(ImageTest, DrawsLinesWithThicknessOrderDoesntMatter) {
+  remove("DrawsLinesWithThicknessOrderDiagonal1.bmp");
+  remove("DrawsLinesWithThicknessOrderDiagonal2.bmp");
+  remove("DrawsLinesWithThicknessOrderDiagonal3.bmp");
+  remove("DrawsLinesWithThicknessOrderDiagonal4.bmp");
+  remove("DrawsLinesWithThicknessOrderHorizontal.bmp");
+  remove("DrawsLinesWithThicknessOrderVertical.bmp");
+
+  int thickness = 10;
+  int size = 100;
+  graphics::Color blue(0, 0, 255);
+  graphics::Color green(0, 255, 0);
+  graphics::Color black(0, 0, 0);
+
+  graphics::Image expected(size, size);
+  graphics::Image actual(size, size);
+
+  // Expected has smaller x0 than x1, smaller y0 than y1.
+  expected.DrawLine(20, 31, 17, 80, blue, thickness);
+  actual.DrawLine(17, 80, 20, 31, blue, thickness);
+  ASSERT_TRUE(ImagesMatch(&expected, &actual,
+                          "DrawsLinesWithThicknessOrderDiagonal1.bmp",
+                          DiffType::kTypeHighlight));
+
+  // Expected has bigger x0 than x1, smaller y0 than y1.
+  expected.DrawLine(77, 20, 80, 80, black, thickness);
+  actual.DrawLine(80, 80, 77, 20, black, thickness);
+  ASSERT_TRUE(ImagesMatch(&expected, &actual,
+                          "DrawsLinesWithThicknessOrderDiagonal2.bmp",
+                          DiffType::kTypeHighlight));
+
+  // Expected has smaller x0 than x1, bigger y0 than y1.
+  expected.DrawLine(10, 78, 80, 13, black, thickness);
+  actual.DrawLine(80, 13, 10, 78, black, thickness);
+  ASSERT_TRUE(ImagesMatch(&expected, &actual,
+                          "DrawsLinesWithThicknessOrderDiagonal3.bmp",
+                          DiffType::kTypeHighlight));
+
+  // Expected has bigger x0 than x1, bigger y0 than y1.
+  expected.DrawLine(57, 80, 80, 20, blue, thickness);
+  actual.DrawLine(80, 20, 57, 80, blue, thickness);
+  ASSERT_TRUE(ImagesMatch(&expected, &actual,
+                          "DrawsLinesWithThicknessOrderDiagonal4.bmp",
+                          DiffType::kTypeHighlight));
+
+  // Horizontal rectangle is the same as a thick line.
+  expected.DrawLine(10, 50, 90, 50, green, thickness);
+  actual.DrawLine(90, 50, 10, 50, green, thickness);
+  ASSERT_TRUE(ImagesMatch(&expected, &actual,
+                          "DrawsLinesWithThicknessOrderHorizontal.bmp",
+                          DiffType::kTypeHighlight));
+
+  // Vertical rectangle is the same as a thick line.
+  expected.DrawLine(50, 5, 50, 95, black, thickness);
+  actual.DrawLine(50, 95, 50, 5, black, thickness);
+  ASSERT_TRUE(ImagesMatch(&expected, &actual,
+                          "DrawsLinesWithThicknessOrderVertical.bmp",
+                          DiffType::kTypeHighlight));
 }
 
 class TestEventListener : public graphics::MouseEventListener {
@@ -211,18 +279,19 @@ class TestEventListener : public graphics::MouseEventListener {
   TestEventListener() = default;
   ~TestEventListener() = default;
   void OnMouseEvent(const graphics::MouseEvent& event) override {
-    latest_event_ = graphics::MouseEvent(event.GetX(), event.GetY(), event.GetMouseAction());
+    latest_event_ = graphics::MouseEvent(event.GetX(), event.GetY(),
+                                         event.GetMouseAction());
   }
 
-  graphics::MouseEvent GetLatestEvent() {
-    return latest_event_;
-  }
+  graphics::MouseEvent GetLatestEvent() { return latest_event_; }
+
  private:
-  graphics::MouseEvent latest_event_ = graphics::MouseEvent(0, 0, graphics::MouseAction::kReleased);
+  graphics::MouseEvent latest_event_ =
+      graphics::MouseEvent(0, 0, graphics::MouseAction::kReleased);
 };
 
-// We can send fake events if we have a reference to the image on which to send events, and we
-// are not in the ShowUntilClosed loop.
+// We can send fake events if we have a reference to the image on which to send
+// events, and we are not in the ShowUntilClosed loop.
 TEST(ImageEventTest, HandlesEvents) {
   TestEventListener listener;
   int size = 100;
@@ -234,28 +303,33 @@ TEST(ImageEventTest, HandlesEvents) {
   generator.MouseDown(10, 20);
   EXPECT_EQ(listener.GetLatestEvent().GetX(), 10);
   EXPECT_EQ(listener.GetLatestEvent().GetY(), 20);
-  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kPressed);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(),
+            graphics::MouseAction::kPressed);
 
   generator.MoveMouseTo(30, 80);
   EXPECT_EQ(listener.GetLatestEvent().GetX(), 30);
   EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
-  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kDragged);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(),
+            graphics::MouseAction::kDragged);
 
   generator.MoveMouseTo(90, 80);
   EXPECT_EQ(listener.GetLatestEvent().GetX(), 90);
   EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
-  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kDragged);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(),
+            graphics::MouseAction::kDragged);
 
   generator.MouseUp();
   EXPECT_EQ(listener.GetLatestEvent().GetX(), 90);
   EXPECT_EQ(listener.GetLatestEvent().GetY(), 80);
-  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(),
+            graphics::MouseAction::kReleased);
 
   generator.MoveMouseTo(30, 30);
   // Mouse moved event.
   EXPECT_EQ(listener.GetLatestEvent().GetX(), 30);
   EXPECT_EQ(listener.GetLatestEvent().GetY(), 30);
-  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kMoved);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(),
+            graphics::MouseAction::kMoved);
 
   // Ensure other mouse buttons don't interfere.
   generator.MouseDown(10, 20);
@@ -263,10 +337,12 @@ TEST(ImageEventTest, HandlesEvents) {
   generator.RightMouseUp();
   EXPECT_EQ(listener.GetLatestEvent().GetX(), 10);
   EXPECT_EQ(listener.GetLatestEvent().GetY(), 20);
-  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kPressed);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(),
+            graphics::MouseAction::kPressed);
   generator.RightMouseDown();
   generator.MouseUp();
-  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(), graphics::MouseAction::kReleased);
+  EXPECT_EQ(listener.GetLatestEvent().GetMouseAction(),
+            graphics::MouseAction::kReleased);
 
   image.RemoveMouseEventListener(listener);
   image.Hide();
@@ -276,13 +352,10 @@ class TestAnimationEventListener : public graphics::AnimationEventListener {
  public:
   TestAnimationEventListener() = default;
   ~TestAnimationEventListener() = default;
-  void OnAnimationStep() override {
-    num_events_++;
-  }
+  void OnAnimationStep() override { num_events_++; }
 
-  int GetNumEvents() {
-    return num_events_;
-  }
+  int GetNumEvents() { return num_events_; }
+
  private:
   int num_events_ = 0;
 };
@@ -307,7 +380,7 @@ TEST(AnimationEventTest, CallsAnimationListeners) {
   ASSERT_EQ(2, listener.GetNumEvents());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

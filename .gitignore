@@ -1,4 +1,4 @@
 *~
 graphics/test/image_unittest
 graphics/test/*.bmp
-
+!graphics/test/example_bmp.bmp
