@@ -7,6 +7,8 @@
 #include <limits>
 #include <vector>
 
+#include "../graphics/image.h"
+
 // TODO: Finish shouldn't showuntilclosed in testing.
 // Testing should have a non-graphical way to go.
 // Save to file
@@ -28,6 +30,8 @@ struct PositionAndOrientation {
   Orientation orientation = Orientation::kNorth;
 };
 
+// Class representing a cell in Karel's world, including a count of beepers
+// and whether or not there are walls.
 class Cell {
  public:
   int GetNumBeepers() const { return num_beepers_; }
@@ -92,18 +96,13 @@ const graphics::Color kErrorColor(200, 0, 50);
 class Robot {
  public:
   // Get the Robot singleton.
-
-  static karel::Robot& PrivateGetInstance() {
-    static Robot instance;
-    return instance;
-  }
-
   static karel::Robot& GetInstance() {
     karel::Robot& instance = PrivateGetInstance();
     instance.Initialize("");
     return instance;
   }
 
+  // Get the Robot singleton and intialize it from a file.
   static karel::Robot& InitializeInstance(std::string filename) {
     karel::Robot& instance = PrivateGetInstance();
     instance.Initialize(filename);
@@ -221,11 +220,13 @@ class Robot {
   }
 
   void Move() {
+    if (finished_) return;
     switch (position_.orientation) {
       case Orientation::kNorth:
         if (position_.y == 0) {
           Error("Cannot move north");
-        } else if (world_[position_.x][position_.y].HasNorthWall() || world_[position_.x][position_.y - 1].HasSouthWall()) {
+        } else if (world_[position_.x][position_.y].HasNorthWall() ||
+                   world_[position_.x][position_.y - 1].HasSouthWall()) {
           Error("Cannot move north");
         } else {
           AnimateMove(position_.x, position_.y - 1);
@@ -234,7 +235,8 @@ class Robot {
       case Orientation::kEast:
         if (position_.x == x_dimen_ - 1) {
           Error("Cannot move east");
-        } else if (world_[position_.x][position_.y].HasEastWall() || world_[position_.x + 1][position_.y].HasWestWall()) {
+        } else if (world_[position_.x][position_.y].HasEastWall() ||
+                   world_[position_.x + 1][position_.y].HasWestWall()) {
           Error("Cannot move east");
         } else {
           AnimateMove(position_.x + 1, position_.y);
@@ -243,7 +245,8 @@ class Robot {
       case Orientation::kSouth:
         if (position_.y == y_dimen_ - 1) {
           Error("Cannot move south");
-        } else if (world_[position_.x][position_.y].HasSouthWall() || world_[position_.x][position_.y + 1].HasNorthWall()) {
+        } else if (world_[position_.x][position_.y].HasSouthWall() ||
+                   world_[position_.x][position_.y + 1].HasNorthWall()) {
           Error("Cannot move south");
         } else {
           AnimateMove(position_.x, position_.y + 1);
@@ -252,7 +255,8 @@ class Robot {
       case Orientation::kWest:
         if (position_.x == 0) {
           Error("Cannot move west");
-        } else if (world_[position_.x][position_.y].HasWestWall() || world_[position_.x - 1][position_.y].HasEastWall()) {
+        } else if (world_[position_.x][position_.y].HasWestWall() ||
+                   world_[position_.x - 1][position_.y].HasEastWall()) {
           Error("Cannot move west");
         } else {
           AnimateMove(position_.x - 1, position_.y);
@@ -262,6 +266,7 @@ class Robot {
   }
 
   void TurnLeft() {
+    if (finished_) return;
     switch (position_.orientation) {
       case Orientation::kNorth:
         position_.orientation = Orientation::kWest;
@@ -282,6 +287,7 @@ class Robot {
   }
 
   void PutBeeper() {
+    if (finished_) return;
     if (!HasBeepersInBag()) {
       Error("No beepers left in bag");
       return;
@@ -295,12 +301,13 @@ class Robot {
   }
 
   void PickBeeper() {
-    int count = world_[position_.x][position_.y].GetNumBeepers();
-    if (count < 1) {
+    if (finished_) return;
+    if (!BeepersPresent()) {
       Error("No beeper to pick up");
       return;
     }
-    world_[position_.x][position_.y].SetNumBeepers(count - 1);
+    world_[position_.x][position_.y].SetNumBeepers(
+        world_[position_.x][position_.y].GetNumBeepers() - 1);
     beeper_count_++;
     DrawWorld();
     DrawRobot();
@@ -309,21 +316,53 @@ class Robot {
 
   bool HasBeepersInBag() { return beeper_count_ > 0; }
 
-  bool FrontIsClear() {
-    return DirectionIsClear(position_.orientation);
+  bool NoBeepersInBag() { return !HasBeepersInBag(); }
+
+  bool BeepersPresent() {
+    return world_[position_.x][position_.y].GetNumBeepers() > 0;
   }
 
-  bool FrontIsBlocked() {
-    return !DirectionIsClear(position_.orientation);
-  }
+  bool NoBeepersPresent() { return !BeepersPresent(); }
+
+  bool FrontIsClear() { return DirectionIsClear(position_.orientation); }
+
+  bool FrontIsBlocked() { return !DirectionIsClear(position_.orientation); }
 
   bool LeftIsClear() {
-    return DirectionIsClear((Orientation) (((int) position_.orientation + 1) % 4));
+    return DirectionIsClear(
+        (Orientation)(((int)position_.orientation + 1) % 4));
   }
 
   bool LeftIsBlocked() {
-    return !DirectionIsClear((Orientation)(((int) position_.orientation + 1) % 4));
+    return !DirectionIsClear(
+        (Orientation)(((int)position_.orientation + 1) % 4));
   }
+
+  bool RightIsClear() {
+    return DirectionIsClear(
+        (Orientation)(((int)position_.orientation - 1) % 4));
+  }
+
+  bool RightIsBlocked() {
+    return !DirectionIsClear(
+        (Orientation)(((int)position_.orientation - 1) % 4));
+  }
+
+  bool FacingNorth() { return position_.orientation == Orientation::kNorth; }
+
+  bool NotFacingNorth() { return !FacingNorth(); }
+
+  bool FacingEast() { return position_.orientation == Orientation::kEast; }
+
+  bool NotFacingEast() { return !FacingEast(); }
+
+  bool FacingSouth() { return position_.orientation == Orientation::kSouth; }
+
+  bool NotFacingSouth() { return !FacingSouth(); }
+
+  bool FacingWest() { return position_.orientation == Orientation::kWest; }
+
+  bool NotFacingWest() { return !FacingWest(); }
 
   void Finish() {
     if (finished_) return;
@@ -334,11 +373,18 @@ class Robot {
  private:
   Robot() {}
 
+  // Singleton.
+  static karel::Robot& PrivateGetInstance() {
+    static Robot instance;
+    return instance;
+  }
+
   // TODO: Take an error code instead of a message so that it's easier to
   // test.
   void Error(std::string message) {
     std::cout << message << std::endl << std::flush;
-    image_.DrawText(image_.GetWidth() / 2, image_.GetHeight() / 2, message, fontSize, kErrorColor);
+    image_.DrawText(image_.GetWidth() / 2, image_.GetHeight() / 2, message,
+                    fontSize, kErrorColor);
     Finish();
   }
 
@@ -347,7 +393,8 @@ class Robot {
       case Orientation::kNorth:
         if (position_.y == 0) {
           return false;
-        } else if (world_[position_.x][position_.y].HasNorthWall() || world_[position_.x][position_.y - 1].HasSouthWall()) {
+        } else if (world_[position_.x][position_.y].HasNorthWall() ||
+                   world_[position_.x][position_.y - 1].HasSouthWall()) {
           return false;
         } else {
           return true;
@@ -356,7 +403,8 @@ class Robot {
       case Orientation::kEast:
         if (position_.x == x_dimen_ - 1) {
           return false;
-        } else if (world_[position_.x][position_.y].HasEastWall() || world_[position_.x + 1][position_.y].HasWestWall()) {
+        } else if (world_[position_.x][position_.y].HasEastWall() ||
+                   world_[position_.x + 1][position_.y].HasWestWall()) {
           return false;
         } else {
           return true;
@@ -365,7 +413,8 @@ class Robot {
       case Orientation::kSouth:
         if (position_.y == y_dimen_ - 1) {
           return false;
-        } else if (world_[position_.x][position_.y].HasSouthWall() || world_[position_.x][position_.y + 1].HasNorthWall()) {
+        } else if (world_[position_.x][position_.y].HasSouthWall() ||
+                   world_[position_.x][position_.y + 1].HasNorthWall()) {
           return false;
         } else {
           return true;
@@ -374,7 +423,8 @@ class Robot {
       case Orientation::kWest:
         if (position_.x == 0) {
           return false;
-        } else if (world_[position_.x][position_.y].HasWestWall() || world_[position_.x - 1][position_.y].HasEastWall()) {
+        } else if (world_[position_.x][position_.y].HasWestWall() ||
+                   world_[position_.x - 1][position_.y].HasEastWall()) {
           return false;
         } else {
           return true;
@@ -643,7 +693,87 @@ bool FrontIsClear() {
   return r.FrontIsClear();
 }
 
+bool FrontIsBlocked() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.FrontIsBlocked();
+}
+
+bool LeftIsClear() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.LeftIsClear();
+}
+
+bool LeftIsBlocked() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.LeftIsBlocked();
+}
+
+bool RightIsClear() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.RightIsClear();
+}
+
+bool RightIsBlocked() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.RightIsBlocked();
+}
+
 bool HasBeepersInBag() {
   karel::Robot& r = karel::Robot::GetInstance();
   return r.HasBeepersInBag();
+}
+
+bool NoBeepersInBag() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.NoBeepersInBag();
+}
+
+bool BeepersPresent() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.BeepersPresent();
+}
+
+bool NoBeepersPresent() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.NoBeepersPresent();
+}
+
+bool FacingNorth() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.FacingNorth();
+}
+
+bool NotFacingNorth() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.NotFacingNorth();
+}
+
+bool FacingEast() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.FacingEast();
+}
+
+bool NotFacingEast() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.NotFacingEast();
+}
+
+bool FacingSouth() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.FacingSouth();
+}
+
+bool NotFacingSouth() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.NotFacingSouth();
+}
+
+bool FacingWest() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.FacingWest();
+}
+
+bool NotFacingWest() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.NotFacingWest();
 }
