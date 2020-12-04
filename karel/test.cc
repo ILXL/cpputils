@@ -1,13 +1,13 @@
 #include "karel.h"
 
 void KarelProgram() {
-  Move();
-  Move();
-  Move();
   TurnLeft();
   Move();
-  Move();
   PickBeeper();
+  Move();
+  Move();
+  Move();
+  Move();
   Move();
   PutBeeper();
   PickBeeper();
@@ -20,8 +20,6 @@ void KarelProgram() {
 
 int main() {
   LoadWorld("worlds/CollectNewspaperKarel.w");
-  // LoadWorld("worlds/8x8.w");
-  // LoadWorld("worlds/StoneMasonKarel.w");
   KarelProgram();
   Finish();
   return 0;
