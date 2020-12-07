@@ -1,3 +1,9 @@
+// Copyright 2020 Paul Salvador Inventado and Google LLC
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
 #include <math.h>
 
 #include <fstream>
@@ -7,8 +13,8 @@
 
 #include "../../graphics/image.h"
 #include "cell.h"
-#include "orientation.h"
 #include "error.h"
+#include "orientation.h"
 
 #ifndef ROBOT_H
 #define ROBOT_H
@@ -19,15 +25,19 @@ class Robot {
  public:
   /**
    * Get the Robot singleton. Initializes it with default values if it isn't
-   * already initialized.
+   * already initialized. Set |enable_graphics| to false for testing, which
+   * will disable animations. Use |force_initialize| for testing which resets
+   * the singleton state.
    */
-  static karel::Robot& GetInstance();
+  static karel::Robot& GetInstance(bool enable_graphics = true, bool force_initialize = false);
 
   /**
-   * Get the Robot singleton and intialize it from a file.
+   * Get the Robot singleton and intialize it from a file. Set |enable_graphics|
+   * to false for testing, which will disable animations. Use |force_initialize| for testing which resets
+   * the singleton state.
    */
   static karel::Robot& InitializeInstance(std::string filename,
-                                          bool enable_graphics = true);
+                                          bool enable_graphics = true, bool force_initialize = false);
 
   // Disallow copy and assign.
   Robot(const Robot&) = delete;
@@ -83,8 +93,10 @@ class Robot {
 
   void Finish();
 
-  // Methods for tests. Tests should access robot with GetInstance
-  // and may inspect its state with these methods.
+  //
+  // Methods for tests. Tests should access Robot with GetInstance
+  // and may inspect its state with the following methods.
+  //
 
   /**
    * Gets the orientation that Karel is facing. May be simpler to use this in
@@ -116,6 +128,16 @@ class Robot {
   const Cell& GetCell(int x, int y) const;
 
   /**
+   * Gets the width of the current world.
+   */
+  int GetWorldWidth() const;
+
+  /**
+   * Gets the height of the current world.
+   */
+  int GetWorldHeight() const;
+
+  /**
    * Returns the robot's current error state or kNoError if it has none.
    */
   RobotError GetError() const;
@@ -131,7 +153,7 @@ class Robot {
    * Loads a Karel world from a file, or if |filename| is the empty string loads
    * a default world with Karel in a default position.
    */
-  void Initialize(std::string filename, bool enable_graphics);
+  void Initialize(std::string filename, bool enable_graphics, bool force_initialize);
 
   void Show(int duration);
 
@@ -165,6 +187,9 @@ class Robot {
   // testing.
   bool enable_animations_ = true;
 
+  // Speed multiplier for animation.
+  double speed_ = 1.0;
+
   // Underlying image.
   graphics::Image image_;
 
@@ -185,9 +210,6 @@ class Robot {
   bool initialized_ = false;
   bool finished_ = false;
   RobotError error_ = RobotError::kNoError;
-
-  // Speed multiplier for animation.
-  double speed_ = 1.0;
 };
 
 }  // namespace karel

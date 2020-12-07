@@ -1,3 +1,9 @@
+// Copyright 2020 Paul Salvador Inventado and Google LLC
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
 #include "orientation.h"
 
 #ifndef CELL_H
@@ -33,7 +39,7 @@ class Cell {
   }
 
  private:
-  bool num_beepers_ = 0;
+  int num_beepers_ = 0;
   bool north_wall_ = false;
   bool east_wall_ = false;
   bool south_wall_ = false;

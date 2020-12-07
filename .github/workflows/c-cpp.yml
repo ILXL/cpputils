@@ -21,3 +21,6 @@ jobs:
     - name: make image_unittest
       run: make image_unittest
       working-directory: graphics/test
+    - name: make karel_unittest
+      run: make karel_unittest
+      working-directory: karel/src/test

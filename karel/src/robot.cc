@@ -1,3 +1,9 @@
+// Copyright 2020 Paul Salvador Inventado and Google LLC
+//
+// Use of this source code is governed by an MIT-style
+// license that can be found in the LICENSE file or at
+// https://opensource.org/licenses/MIT.
+
 #include "robot.h"
 
 #include <math.h>
@@ -12,11 +18,8 @@
 #include "error.h"
 #include "orientation.h"
 
-// TODO: Finish shouldn't showuntilclosed in testing.
-// Testing should have a non-graphical way to go.
-// Save to file
+// TODO: Save to image file (maybe for testing)
 // document
-// phew
 
 namespace karel {
 
@@ -72,25 +75,27 @@ karel::Robot& Robot::PrivateGetInstance() {
 }
 
 // static.
-karel::Robot& Robot::GetInstance() {
+karel::Robot& Robot::GetInstance(bool enable_graphics, bool force_initialize) {
   karel::Robot& instance = PrivateGetInstance();
-  instance.Initialize("", /* enable graphics */ true);
+  instance.Initialize("", enable_graphics, force_initialize);
   return instance;
 }
 
 // Get the Robot singleton and intialize it from a file.
 // static.
 karel::Robot& Robot::InitializeInstance(std::string filename,
-                                        bool enable_graphics) {
+                                        bool enable_graphics, bool force_initialize) {
   karel::Robot& instance = PrivateGetInstance();
-  instance.Initialize(filename, enable_graphics);
+  instance.Initialize(filename, enable_graphics, force_initialize);
   return instance;
 }
 
-void Robot::Initialize(std::string filename, bool enable_graphics) {
-  // Ensure only intitialized once.
-  if (initialized_) return;
+void Robot::Initialize(std::string filename, bool enable_graphics, bool force_initialize) {
+  // Ensure only intitialized once unless |force_initialize| is true.
+  if (initialized_ && !force_initialize) return;
   initialized_ = true;
+  error_ = RobotError::kNoError;
+  finished_ = false;
 
   enable_animations_ = enable_graphics;
 
@@ -106,10 +111,14 @@ void Robot::Initialize(std::string filename, bool enable_graphics) {
     }
     // Nearly infinite beepers.
     beeper_count_ = std::numeric_limits<int>::max();
-    PositionAndOrientation position_ = {0, y_dimen_ - 1, Orientation::kEast};
+    position_ = {0, kDefaultDimen - 1, Orientation::kEast};
   } else {
     std::fstream world_file;
-    world_file.open(filename);
+    try {
+      world_file.open(filename);
+    } catch (std::ifstream::failure e) {
+      throw std::string("Error opening file");
+    }
     if (!world_file.is_open()) {
       // TODO: Replace throwables with better error codes?
       throw std::string("Error opening file");
@@ -132,9 +141,9 @@ void Robot::Initialize(std::string filename, bool enable_graphics) {
     if (line_prefix != dimension_prefix) {
       throw std::string("Could not find Dimension in first line");
     }
-    if (x_dimen_ < 2 || y_dimen_ < 1) {
+    if (x_dimen_ < 1 || y_dimen_ < 1) {
       throw std::string(
-          "Cannot load a world less than 2 cells wide or less than 1 cell "
+          "Cannot load a world less than 1 cell wide or less than 1 cell "
           "tall");
     }
     for (int i = 0; i < x_dimen_; i++) {
@@ -177,6 +186,9 @@ void Robot::Initialize(std::string filename, bool enable_graphics) {
         if (!(world_file >> speed_)) {
           throw std::string("Error reading Speed");
         }
+        if (speed_ < 0) {
+          throw std::string("Speed must be greater than 0");
+        }
       } else {
         std::cout << "unexpected token in file: " << line_prefix << std::endl
                   << std::flush;
@@ -185,7 +197,8 @@ void Robot::Initialize(std::string filename, bool enable_graphics) {
     }
     world_file.close();
   }
-  image_.Initialize(x_dimen_ * pxPerCell + margin,
+  int min_width = 5 * pxPerCell + margin;
+  image_.Initialize(std::max(x_dimen_ * pxPerCell + margin, min_width),
                     y_dimen_ * pxPerCell + margin);
 
   DrawWorld();
@@ -367,12 +380,16 @@ const Cell& Robot::GetCell(int x, int y) const {
   return world_[x - 1][y_dimen_ - y];
 }
 
+int Robot::GetWorldWidth() const { return x_dimen_; }
+
+int Robot::GetWorldHeight() const { return y_dimen_; }
+
 RobotError Robot::GetError() const { return error_; }
 
 void Robot::Show(int duration) {
   if (finished_) return;
   if (enable_animations_) {
-    image_.ShowForMs(duration / speed_, "Karel's World");
+    image_.ShowForMs(duration * speed_, "Karel's World");
   }
 }
 
@@ -381,6 +398,7 @@ void Robot::Error(RobotError error) {
   std::string message = "Error: ";
   switch (error) {
     case kNoError:
+      // This shouldn't happen.
       return;
     case kCannotMoveNorth:
       message += " Cannot move north";
