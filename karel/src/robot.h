@@ -26,8 +26,8 @@ class Robot {
   /**
    * Get the Robot singleton. Initializes it with default values if it isn't
    * already initialized. Set |enable_graphics| to false for testing, which
-   * will disable animations. Use |force_initialize| for testing which resets
-   * the singleton state.
+   * will disable animations. Use |force_initialize| only for testing which
+   * resets the singleton state.
    */
   static karel::Robot& GetInstance(bool enable_graphics = true,
                                    bool force_initialize = false);
@@ -35,7 +35,7 @@ class Robot {
   /**
    * Get the Robot singleton and intialize it from a file. Set |enable_graphics|
    * to false for testing, which will disable animations. Use |force_initialize|
-   * for testing which resets the singleton state.
+   * only for testing which resets the singleton state.
    */
   static karel::Robot& InitializeInstance(std::string filename,
                                           bool enable_graphics = true,

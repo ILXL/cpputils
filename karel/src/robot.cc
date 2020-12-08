@@ -19,7 +19,8 @@
 #include "orientation.h"
 
 // TODO: Save to image file (maybe for testing)
-// document
+// documentation
+// file error states
 
 namespace karel {
 
@@ -98,7 +99,7 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
   initialized_ = true;
   error_ = RobotError::kNoError;
   finished_ = false;
-
+  world_.clear();
   enable_animations_ = enable_graphics;
 
   if (!filename.size()) {
@@ -315,11 +316,13 @@ bool Robot::FrontIsClear() const {
 }
 
 bool Robot::LeftIsClear() const {
-  return DirectionIsClear((Orientation)(((int)position_.orientation + 1) % 4));
+  return DirectionIsClear(static_cast<Orientation>(
+      (static_cast<int>(position_.orientation) + 1) % 4));
 }
 
 bool Robot::RightIsClear() const {
-  return DirectionIsClear((Orientation)(((int)position_.orientation - 1) % 4));
+  return DirectionIsClear(static_cast<Orientation>(
+      (static_cast<int>(position_.orientation) - 1 + 4) % 4));
 }
 
 bool Robot::FacingNorth() const {
@@ -459,18 +462,18 @@ void Robot::DrawWorld() {
                        kWhite);
   for (int i = 0; i <= y_dimen_; i++) {
     // Draw horizontal lines and indexes.
-    int x = pxPerCell * x_dimen_ - 1;
+    int x = pxPerCell * x_dimen_;
     int y = i * pxPerCell;
     image_.DrawLine(0, y, x, y, kGridColor, kWallThickness);
     if (i < y_dimen_) {
       image_.DrawText(x + fontSize / 2, y + (pxPerCell - fontSize) / 2,
-                      std::to_string(i + 1), fontSize, kWallColor);
+                      std::to_string(y_dimen_ - i), fontSize, kWallColor);
     }
   }
   for (int i = 0; i <= x_dimen_; i++) {
     // Draw vertical lines and indexes.
     int x = i * pxPerCell;
-    int y = pxPerCell * y_dimen_ - 1;
+    int y = pxPerCell * y_dimen_;
     image_.DrawLine(x, 0, x, y, kGridColor, kWallThickness);
     if (i < x_dimen_) {
       image_.DrawText(x + (pxPerCell - fontSize) / 2, y + fontSize / 2,
@@ -505,22 +508,20 @@ void Robot::DrawWorld() {
       }
       // Draw the walls.
       if (cell.HasNorthWall()) {
-        image_.DrawLine(i * pxPerCell, j * pxPerCell, (i + 1) * pxPerCell - 1,
+        image_.DrawLine(i * pxPerCell, j * pxPerCell, (i + 1) * pxPerCell,
                         j * pxPerCell, kWallColor, kWallThickness);
       }
       if (cell.HasSouthWall()) {
-        image_.DrawLine(i * pxPerCell, (j + 1) * pxPerCell - 1,
-                        (i + 1) * pxPerCell - 1, (j + 1) * pxPerCell - 1,
-                        kWallColor, kWallThickness);
+        image_.DrawLine(i * pxPerCell, (j + 1) * pxPerCell, (i + 1) * pxPerCell,
+                        (j + 1) * pxPerCell, kWallColor, kWallThickness);
       }
       if (cell.HasWestWall()) {
         image_.DrawLine(i * pxPerCell, j * pxPerCell, i * pxPerCell,
-                        (j + 1) * pxPerCell - 1, kWallColor, kWallThickness);
+                        (j + 1) * pxPerCell, kWallColor, kWallThickness);
       }
       if (cell.HasEastWall()) {
-        image_.DrawLine((i + 1) * pxPerCell - 1, j * pxPerCell,
-                        (i + 1) * pxPerCell - 1, (j + 1) * pxPerCell - 1,
-                        kWallColor, kWallThickness);
+        image_.DrawLine((i + 1) * pxPerCell, j * pxPerCell, (i + 1) * pxPerCell,
+                        (j + 1) * pxPerCell, kWallColor, kWallThickness);
       }
     }
   }

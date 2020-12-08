@@ -76,7 +76,7 @@ void KarelProgram() {
 }
 
 int main() {
-  LoadWorld("src/test/worlds/CollectNewspaperKarel.w");
+  LoadWorld("worlds/CollectNewspaperKarel.w");
   KarelProgram();
   Finish();
   return 0;
