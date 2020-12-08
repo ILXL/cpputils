@@ -2,14 +2,6 @@
 
 TODO: Port README to a ILXL guide and the CPPUtils wiki.
 
-## History
-
-Karel the Robot is a gentle introductory programming language created by [Dr. Richard Pattis](https://www.ics.uci.edu/~pattis/) in [*Karel the Robot: A Gentle Introduction to The Art of Programming*](https://www.google.com/books/edition/_/ghcZAQAAIAAJ?hl=en&gbpv=1). The Karel language emphasizes logic while hiding tricky syntax, allowing students to begin making exciting graphical programs with very little background.
-
-Karel is named "after the Czech playwright Karel Čapek, whose 1923 play R.U.R. (Rossum’s Universal Robots) gave the word robot to the English language." ([Karel Reader](https://web.stanford.edu/class/archive/cs/cs106a/cs106a.1194/karelReader/en/chapter1.html))
-
-This C++ version of Karel the Robot was created with permission from Dr. Pattis.
-
 ## Overview
 
 Karel lives in a two-dimensional grid where (1, 1) is at the bottom left corner. Karel has a position and an orientation in the grid (north, east, south or west).
@@ -53,11 +45,49 @@ bool NotFacingWest();
 
 ``robot.h`` provides a Karel the Robot implementation in C++. This is functional programming: simply ``#include "cpputils/karel/karel.h"`` and call the Karel functions in the global namespace.
 
+### Example program
+
+```cpp
+#include "cpputils/karel/karel.h"
+
+void TurnRight() {
+  TurnLeft();
+  TurnLeft();
+  TurnLeft();
+}
+
+void KarelProgram() {
+  while(FrontIsClear()) {
+    Move();
+  }
+  TurnRight();
+  Move();
+  TurnLeft();
+  Move();
+  PickBeeper();
+  TurnLeft();
+  TurnLeft();
+  while(FrontIsClear()) {
+    Move();
+  }
+  TurnRight();
+  Move();
+  TurnRight();
+}
+
+int main() {
+  LoadWorld("src/test/worlds/CollectNewspaperKarel.w");
+  KarelProgram();
+  Finish();
+  return 0;
+}
+```
+
 ### Building
 
 Compile (from the directory containing cpputils) with:
 
-``clang++ -std=c++17 main.cc cpputils/karel/karel.cc cpputils/karel/src/robot.cc cpputils/graphics/image.cc -o main -lm -lX11 -lpthread``
+``clang++ -std=c++17 test.cc cpputils/karel/karel.cc cpputils/karel/src/robot.cc cpputils/graphics/image.cc -o main -lm -lX11 -lpthread``
 
 A few more flags are needed in Mac.
 
@@ -73,6 +103,26 @@ void Finish();
 ### World files
 
 Same as Stanford 106A. Dimension must be the first line.
+
+`CollectNewspaperKarel.w`:
+
+```
+Dimension: (7, 5)
+Wall: (3, 2) west
+Wall: (3, 2) south
+Wall: (3, 3) west
+Wall: (3, 4) west
+Wall: (3, 5) south
+Wall: (4, 2) south
+Wall: (4, 5) south
+Wall: (5, 2) south
+Wall: (5, 5) south
+Wall: (6, 2) west
+Wall: (6, 4) west
+Beeper: (6, 3) 1
+Karel: (3, 4) east
+Speed: 1.00
+```
 
 ### Unit testing
 
