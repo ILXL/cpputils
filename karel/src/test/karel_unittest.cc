@@ -21,8 +21,10 @@ using karel::Robot;
 using karel::RobotError;
 
 // Test TODOs:
-// Test walls, loading maps with walls, not walking through walls
+// Test loading 1 and many beepers.
+// Test loading world where karel has finite beepers.
 // Test error states
+// Test loading bad files and helpful output
 // Test stops taking action after reaching an error state.
 // Test loading beepers
 // Test putting/picking beepers not at (1, 1)
@@ -86,6 +88,139 @@ TEST_F(KarelTest, LoadsWorld) {
   ASSERT_EQ(1, r.GetYPosition());
   ASSERT_EQ(Orientation::kEast, r.GetOrientation());
   ASSERT_TRUE(IsBasicallyInfinite(r.GetNumBeepersInBag()));
+}
+
+TEST_F(KarelTest, LoadsWorldWithOuterWalls) {
+  Robot& r =
+      Robot::InitializeInstance("worlds/outer_walls.w", /* enable animations */ false,
+                                /* force initialize */ true);
+  ASSERT_EQ(8, r.GetWorldWidth());
+  ASSERT_EQ(8, r.GetWorldHeight());
+
+  // Cell at (3, 5) has only north wall.
+  EXPECT_TRUE(r.GetCell(3, 5).HasNorthWall());
+  // Cell at (2, 6) has only east wall.
+  EXPECT_TRUE(r.GetCell(2, 6).HasEastWall());
+  // Cell at (3, 7) has only south wall
+  EXPECT_TRUE(r.GetCell(3, 7).HasSouthWall());
+  // Cell at (4, 6) has only west wall.
+  EXPECT_TRUE(r.GetCell(4, 6).HasWestWall());
+
+  ASSERT_EQ(Orientation::kEast, r.GetOrientation());
+  ASSERT_EQ(3, r.GetXPosition());
+  ASSERT_EQ(6, r.GetYPosition());
+}
+
+TEST_F(KarelTest, LoadsWorldWithInnerWalls) {
+  Robot& r =
+      Robot::InitializeInstance("worlds/inner_walls.w", /* enable animations */ false,
+                                /* force initialize */ true);
+  // Cell at (3, 2) has all four walls.
+  const Cell& c = r.GetCell(3, 2);
+  EXPECT_TRUE(c.HasNorthWall());
+  EXPECT_TRUE(c.HasEastWall());
+  EXPECT_TRUE(c.HasSouthWall());
+  EXPECT_TRUE(c.HasWestWall());
+
+  ASSERT_EQ(Orientation::kEast, r.GetOrientation());
+  ASSERT_EQ(3, r.GetXPosition());
+  ASSERT_EQ(2, r.GetYPosition());
+}
+
+TEST_F(KarelTest, CannotMoveThroughOuterWalls) {
+  for (int i = 0; i < 4; i++) {
+    Robot& r =
+        Robot::InitializeInstance("worlds/outer_walls.w",
+                                  /* enable animations */ false,
+                                  /* force initialize */ true);
+    ASSERT_EQ(RobotError::kNoError, r.GetError());
+    for (int j = 0; j < i; j++) {
+      TurnLeft();
+    }
+    EXPECT_FALSE(FrontIsClear());
+    EXPECT_TRUE(FrontIsBlocked());
+    EXPECT_FALSE(RightIsClear());
+    EXPECT_TRUE(RightIsBlocked());
+    EXPECT_FALSE(LeftIsClear());
+    EXPECT_TRUE(LeftIsBlocked());
+    Move();
+    if (i == 0) {
+      ASSERT_TRUE(FacingEast());
+      EXPECT_EQ(RobotError::kCannotMoveEast, r.GetError());
+    } else if (i == 1) {
+      ASSERT_TRUE(FacingNorth());
+      EXPECT_EQ(RobotError::kCannotMoveNorth, r.GetError());
+    } else if (i == 2) {
+      ASSERT_TRUE(FacingWest());
+      EXPECT_EQ(RobotError::kCannotMoveWest, r.GetError());
+    } else {
+      ASSERT_TRUE(FacingSouth());
+      EXPECT_EQ(RobotError::kCannotMoveSouth, r.GetError());
+    }
+  }
+}
+
+TEST_F(KarelTest, CannotMoveThroughInnerWalls) {
+  for (int i = 0; i < 4; i++) {
+    Robot& r =
+        Robot::InitializeInstance("worlds/inner_walls.w",
+                                  /* enable animations */ false,
+                                  /* force initialize */ true);
+    ASSERT_EQ(RobotError::kNoError, r.GetError());
+    for (int j = 0; j < i; j++) {
+      TurnLeft();
+    }
+    Move();
+    EXPECT_FALSE(FrontIsClear());
+    EXPECT_TRUE(FrontIsBlocked());
+    EXPECT_FALSE(RightIsClear());
+    EXPECT_TRUE(RightIsBlocked());
+    EXPECT_FALSE(LeftIsClear());
+    EXPECT_TRUE(LeftIsBlocked());
+    if (i == 0) {
+      ASSERT_TRUE(FacingEast());
+      EXPECT_EQ(RobotError::kCannotMoveEast, r.GetError());
+    } else if (i == 1) {
+      ASSERT_TRUE(FacingNorth());
+      EXPECT_EQ(RobotError::kCannotMoveNorth, r.GetError());
+    } else if (i == 2) {
+      ASSERT_TRUE(FacingWest());
+      EXPECT_EQ(RobotError::kCannotMoveWest, r.GetError());
+    } else {
+      ASSERT_TRUE(FacingSouth());
+      EXPECT_EQ(RobotError::kCannotMoveSouth, r.GetError());
+    }
+  }
+}
+
+TEST_F(KarelTest, CannotMoveThroughWorldEdges) {
+  for (int i = 0; i < 4; i++) {
+    Robot& r =
+        Robot::InitializeInstance("worlds/2x1.w",
+                                  /* enable animations */ false,
+                                  /* force initialize */ true);
+    ASSERT_EQ(RobotError::kNoError, r.GetError());
+    for (int j = 0; j < i; j++) {
+      TurnLeft();
+    }
+    if (FacingEast()) {
+      Move();
+      Move();
+      EXPECT_EQ(RobotError::kCannotMoveEast, r.GetError());
+      EXPECT_EQ(2, r.GetXPosition());
+      EXPECT_EQ(1, r.GetYPosition());
+    } else if (FacingNorth()) {
+      Move();
+      EXPECT_EQ(RobotError::kCannotMoveNorth, r.GetError());
+    } else if (FacingWest()) {
+      Move();
+      EXPECT_EQ(RobotError::kCannotMoveWest, r.GetError());
+    } else if (FacingSouth()) {
+      Move();
+      EXPECT_EQ(RobotError::kCannotMoveSouth, r.GetError());
+    }
+  }
+
 }
 
 TEST_F(KarelTest, PutsAndPicksBeeper) {

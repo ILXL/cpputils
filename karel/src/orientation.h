@@ -10,10 +10,10 @@
 namespace karel {
 
 enum Orientation {
-  kNorth = 1,
-  kEast = 2,
-  kSouth = 3,
-  kWest = 4,
+  kNorth = 0,
+  kEast = 1,
+  kSouth = 2,
+  kWest = 3,
 };
 
 struct PositionAndOrientation {
