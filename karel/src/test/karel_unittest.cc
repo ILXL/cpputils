@@ -23,6 +23,7 @@ using karel::RobotError;
 // Test TODOs:
 // Test walls, loading maps with walls, not walking through walls
 // Test error states
+// Test stops taking action after reaching an error state.
 // Test loading beepers
 // Test putting/picking beepers not at (1, 1)
 

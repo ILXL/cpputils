@@ -12,7 +12,8 @@ void LoadWorld(std::string filename) {
   try {
     karel::Robot& r = karel::Robot::InitializeInstance(filename);
   } catch (std::string error) {
-    std::cout << "Error loading world file " << filename << ": \n" << error << std::endl;
+    std::cout << "Error loading world file " << filename << ": \n"
+              << error << std::endl;
     exit(1);
   }
 }
@@ -37,97 +38,70 @@ void PickBeeper() {
   r.PickBeeper();
 }
 
-void Finish() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  r.Finish();
-}
-
-bool FrontIsClear() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.FrontIsClear();
-}
-
-bool FrontIsBlocked() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.FrontIsBlocked();
-}
-
-bool LeftIsClear() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.LeftIsClear();
-}
-
-bool LeftIsBlocked() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.LeftIsBlocked();
-}
-
-bool RightIsClear() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.RightIsClear();
-}
-
-bool RightIsBlocked() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.RightIsBlocked();
-}
-
 bool HasBeepersInBag() {
   karel::Robot& r = karel::Robot::GetInstance();
   return r.HasBeepersInBag();
 }
 
-bool NoBeepersInBag() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.NoBeepersInBag();
-}
+bool NoBeepersInBag() { return !HasBeepersInBag(); }
 
 bool BeepersPresent() {
   karel::Robot& r = karel::Robot::GetInstance();
   return r.BeepersPresent();
 }
 
-bool NoBeepersPresent() {
+bool NoBeepersPresent() { return !BeepersPresent(); }
+
+bool FrontIsClear() {
   karel::Robot& r = karel::Robot::GetInstance();
-  return r.NoBeepersPresent();
+  return r.FrontIsClear();
 }
+
+bool FrontIsBlocked() { return !FrontIsClear(); }
+
+bool LeftIsClear() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.LeftIsClear();
+}
+
+bool LeftIsBlocked() { return !LeftIsClear(); }
+
+bool RightIsClear() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  return r.RightIsClear();
+}
+
+bool RightIsBlocked() { return !RightIsClear(); }
 
 bool FacingNorth() {
   karel::Robot& r = karel::Robot::GetInstance();
   return r.FacingNorth();
 }
 
-bool NotFacingNorth() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.NotFacingNorth();
-}
+bool NotFacingNorth() { return !FacingNorth(); }
 
 bool FacingEast() {
   karel::Robot& r = karel::Robot::GetInstance();
   return r.FacingEast();
 }
 
-bool NotFacingEast() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.NotFacingEast();
-}
+bool NotFacingEast() { return !FacingEast(); }
 
 bool FacingSouth() {
   karel::Robot& r = karel::Robot::GetInstance();
   return r.FacingSouth();
 }
 
-bool NotFacingSouth() {
-  karel::Robot& r = karel::Robot::GetInstance();
-  return r.NotFacingSouth();
-}
+bool NotFacingSouth() { return !FacingSouth(); }
 
 bool FacingWest() {
   karel::Robot& r = karel::Robot::GetInstance();
   return r.FacingWest();
 }
 
-bool NotFacingWest() {
+bool NotFacingWest() { return !FacingWest(); }
+
+void Finish() {
   karel::Robot& r = karel::Robot::GetInstance();
-  return r.NotFacingWest();
+  r.Finish();
 }

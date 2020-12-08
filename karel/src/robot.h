@@ -29,74 +29,110 @@ class Robot {
    * will disable animations. Use |force_initialize| for testing which resets
    * the singleton state.
    */
-  static karel::Robot& GetInstance(bool enable_graphics = true, bool force_initialize = false);
+  static karel::Robot& GetInstance(bool enable_graphics = true,
+                                   bool force_initialize = false);
 
   /**
    * Get the Robot singleton and intialize it from a file. Set |enable_graphics|
-   * to false for testing, which will disable animations. Use |force_initialize| for testing which resets
-   * the singleton state.
+   * to false for testing, which will disable animations. Use |force_initialize|
+   * for testing which resets the singleton state.
    */
   static karel::Robot& InitializeInstance(std::string filename,
-                                          bool enable_graphics = true, bool force_initialize = false);
+                                          bool enable_graphics = true,
+                                          bool force_initialize = false);
 
-  // Disallow copy and assign.
+  // Disallow copy and assignment.
   Robot(const Robot&) = delete;
   karel::Robot& operator=(const Robot&) = delete;
 
+  /////////////////////////////////////////////////////////
+  // Methods for core Karel functionality                //
+  // These methods allow interaction with Karel.         //
+  /////////////////////////////////////////////////////////
+
   /**
    * Move Karel forward one step. Results in an error if Karel cannot move
-   * forward.
+   * forward because of a wall or an edge.
    */
   void Move();
 
+  /**
+   * Turns Karel to the left.
+   */
   void TurnLeft();
 
+  /**
+   * Places a beeper from Karel's beeper bag onto the current cell where Karel
+   * is. Results in an error if Karel has no beepers left in their bag.
+   */
   void PutBeeper();
 
+  /**
+   * Picks a beeper from the cell where Karel is standing and places it in
+   * their beeper bag. Results in an error if there are no beepers in Karel's
+   * current cell.
+   */
   void PickBeeper();
 
+  /**
+   * Returns true if Karel has beepers in their bag, or false otherwise.
+   */
   bool HasBeepersInBag() const;
 
-  bool NoBeepersInBag() const;
-
+  /**
+   * Returns true if Karel is standing on a cell with at least one beeper, or
+   * false otherwise.
+   */
   bool BeepersPresent() const;
 
-  bool NoBeepersPresent() const;
-
+  /**
+   * Returns true if there is no wall nor edge in front of Karel and they could
+   * move forward, or false otherwise.
+   */
   bool FrontIsClear() const;
 
-  bool FrontIsBlocked() const;
-
+  /**
+   * Returns true if there is no wall nor edge directly to Karel's left, or
+   * false otherwise.
+   */
   bool LeftIsClear() const;
 
-  bool LeftIsBlocked() const;
-
+  /**
+   * Returns true if there is no wall nor edge directly to Karel's right, or
+   * false otherwise.
+   */
   bool RightIsClear() const;
 
-  bool RightIsBlocked() const;
-
+  /**
+   * Returns true if Karel is facing north or false otherwise.
+   */
   bool FacingNorth() const;
 
-  bool NotFacingNorth() const;
-
+  /**
+   * Returns true if Karel is facing east or false otherwise.
+   */
   bool FacingEast() const;
 
-  bool NotFacingEast() const;
-
+  /**
+   * Returns true if Karel is facing south or false otherwise.
+   */
   bool FacingSouth() const;
 
-  bool NotFacingSouth() const;
-
+  /**
+   * Returns true if Karel is facing west or false otherwise.
+   */
   bool FacingWest() const;
 
-  bool NotFacingWest() const;
-
+  /**
+   * Completes a Karel program. Continues to show the image but will not
+   * do any more actions.
+   */
   void Finish();
 
-  //
-  // Methods for tests. Tests should access Robot with GetInstance
-  // and may inspect its state with the following methods.
-  //
+  /////////////////////////////////////////////////////////////////////
+  // Methods for tests. Tests should access Robot with GetInstance   //
+  // and may inspect its state with the following methods.           //
+  /////////////////////////////////////////////////////////////////////
 
   /**
    * Gets the orientation that Karel is facing. May be simpler to use this in
@@ -153,12 +189,22 @@ class Robot {
    * Loads a Karel world from a file, or if |filename| is the empty string loads
    * a default world with Karel in a default position.
    */
-  void Initialize(std::string filename, bool enable_graphics, bool force_initialize);
+  void Initialize(std::string filename, bool enable_graphics,
+                  bool force_initialize);
 
+  /**
+   * Shows karel's world, blocking for the given |duration| in milliseconds.
+   */
   void Show(int duration);
 
+  /**
+   * Displays an error and finishes the program.
+   */
   void Error(RobotError error);
 
+  /**
+   * Helper method to see if a compass direction is clear.
+   */
   bool DirectionIsClear(Orientation orientation) const;
 
   void DrawWorld();
@@ -173,14 +219,19 @@ class Robot {
 
   void AnimateMove(int next_x, int next_y);
 
-  // Note that the orientation is not populated. This is just a helper to
-  // get the x and y position from a file with the next items in the stream
-  // being (x, y)
+  /**
+   * Helper method to parse position from the next item in a file stream.
+   * Note that the orientation is not populated. This is just a helper to
+   * get the x and y position from a file with the next items in the stream
+   * being (x, y)
+   */
   PositionAndOrientation ParsePosition(std::fstream& file) const;
 
-  // Helper to get orientation of the form, `(x, y) direction`, for example,
-  // (3, 7) East
-  // Direction may be lower-case or have an uppercase first letter.
+  /**
+   * Helper to get orientation of the form, `(x, y) direction`, for example,
+   * (3, 7) East
+   * Direction may be lower-case or have an uppercase first letter.
+   */
   PositionAndOrientation ParsePositionAndOrientation(std::fstream& file) const;
 
   // Whether animations are enabled. They should probably be disabled for

@@ -84,13 +84,15 @@ karel::Robot& Robot::GetInstance(bool enable_graphics, bool force_initialize) {
 // Get the Robot singleton and intialize it from a file.
 // static.
 karel::Robot& Robot::InitializeInstance(std::string filename,
-                                        bool enable_graphics, bool force_initialize) {
+                                        bool enable_graphics,
+                                        bool force_initialize) {
   karel::Robot& instance = PrivateGetInstance();
   instance.Initialize(filename, enable_graphics, force_initialize);
   return instance;
 }
 
-void Robot::Initialize(std::string filename, bool enable_graphics, bool force_initialize) {
+void Robot::Initialize(std::string filename, bool enable_graphics,
+                       bool force_initialize) {
   // Ensure only intitialized once unless |force_initialize| is true.
   if (initialized_ && !force_initialize) return;
   initialized_ = true;
@@ -304,61 +306,37 @@ void Robot::PickBeeper() {
 
 bool Robot::HasBeepersInBag() const { return beeper_count_ > 0; }
 
-bool Robot::NoBeepersInBag() const { return !HasBeepersInBag(); }
-
 bool Robot::BeepersPresent() const {
   return world_[position_.x][position_.y].GetNumBeepers() > 0;
 }
 
-bool Robot::NoBeepersPresent() const { return !BeepersPresent(); }
-
 bool Robot::FrontIsClear() const {
   return DirectionIsClear(position_.orientation);
-}
-
-bool Robot::FrontIsBlocked() const {
-  return !DirectionIsClear(position_.orientation);
 }
 
 bool Robot::LeftIsClear() const {
   return DirectionIsClear((Orientation)(((int)position_.orientation + 1) % 4));
 }
 
-bool Robot::LeftIsBlocked() const {
-  return !DirectionIsClear((Orientation)(((int)position_.orientation + 1) % 4));
-}
-
 bool Robot::RightIsClear() const {
   return DirectionIsClear((Orientation)(((int)position_.orientation - 1) % 4));
-}
-
-bool Robot::RightIsBlocked() const {
-  return !DirectionIsClear((Orientation)(((int)position_.orientation - 1) % 4));
 }
 
 bool Robot::FacingNorth() const {
   return position_.orientation == Orientation::kNorth;
 }
 
-bool Robot::NotFacingNorth() const { return !FacingNorth(); }
-
 bool Robot::FacingEast() const {
   return position_.orientation == Orientation::kEast;
 }
-
-bool Robot::NotFacingEast() const { return !FacingEast(); }
 
 bool Robot::FacingSouth() const {
   return position_.orientation == Orientation::kSouth;
 }
 
-bool Robot::NotFacingSouth() const { return !FacingSouth(); }
-
 bool Robot::FacingWest() const {
   return position_.orientation == Orientation::kWest;
 }
-
-bool Robot::NotFacingWest() const { return !FacingWest(); }
 
 void Robot::Finish() {
   if (finished_) return;
@@ -423,16 +401,11 @@ void Robot::Error(RobotError error) {
   int approx_width = 25 * kErrorFontSize / 4;
   int text_x = std::max(2, image_.GetWidth() / 2 - approx_width);
   int text_y = image_.GetHeight() / 2 - kErrorFontSize / 2;
-  image_.DrawText(text_x - 2, text_y - 2, message,
-                  kErrorFontSize, kWhite);
-  image_.DrawText(text_x + 2, text_y - 2, message,
-                  kErrorFontSize, kWhite);
-  image_.DrawText(text_x - 2, text_y + 2, message,
-                  kErrorFontSize, kWhite);
-  image_.DrawText(text_x + 2, text_y + 2, message,
-                  kErrorFontSize, kWhite);
-  image_.DrawText(text_x, text_y, message, kErrorFontSize,
-                  kErrorColor);
+  image_.DrawText(text_x - 2, text_y - 2, message, kErrorFontSize, kWhite);
+  image_.DrawText(text_x + 2, text_y - 2, message, kErrorFontSize, kWhite);
+  image_.DrawText(text_x - 2, text_y + 2, message, kErrorFontSize, kWhite);
+  image_.DrawText(text_x + 2, text_y + 2, message, kErrorFontSize, kWhite);
+  image_.DrawText(text_x, text_y, message, kErrorFontSize, kErrorColor);
   Finish();
 }
 
