@@ -9,6 +9,10 @@
 
 namespace karel {
 
+/**
+ * Defines an orientation in the grid using compass directions: north is
+ * up, east is right, west is down, and south is left.
+ */
 enum Orientation {
   kNorth = 0,
   kEast = 1,
@@ -16,6 +20,9 @@ enum Orientation {
   kWest = 3,
 };
 
+/**
+ * Defines a position and orientation in the world grid.
+ */
 struct PositionAndOrientation {
   int x = 0;
   int y = 0;

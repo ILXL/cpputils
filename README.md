@@ -20,9 +20,15 @@ Karel the Robot is a gentle introductory programming language created by [Dr. Ri
 
 ![karel the robot screenshot](karel/src/test/karel.png)
 
-To create graphical Karel the Robot programs in C++, include ``karel/karel.h``.
+### Accessibility
+
+Karel programs may export the world to CSV after each action. This may be helpful to screen-reader users.
+
+Karel programs may prompt before each robot action. This may be helpful for users who need to control the speed of execution.
 
 ### Usage
+
+To create Karel the Robot programs in C++, include ``karel/karel.h``.
 
 (TODO): Learn more about how to use the C++ Utils Karel the Robot functions in this [interactive tutorial](https://github.com/ILXL-guides/intro-to-karel)
 

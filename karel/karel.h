@@ -149,3 +149,21 @@ void LoadWorld(std::string filename);
  * do any more actions.
  */
 void Finish();
+
+/////////////////////////////////////////////////////////////////////////////
+// Methods for improving the accessibility of Karel                        //
+/////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Enables Karel CSV output. This will print Karel's world to a CSV between
+ * each action, and prompt to continue to the next action. May be used by
+ * screen-reader users to inspect Karel's world.
+ */
+void EnableCSVOutput();
+
+/**
+ * Causes Karel to wait between each action function (Move, TurnLeft,
+ * PutBeeper, PickBeeper) until the user enters input into the terminal to
+ * proceed.
+ */
+void EnablePromptBeforeAction();

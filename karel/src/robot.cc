@@ -99,8 +99,12 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
   initialized_ = true;
   error_ = RobotError::kNoError;
   finished_ = false;
+  if (force_initialize) {
+    prompt_between_actions_ = false;
+    enable_csv_output_ = false;
+  }
   world_.clear();
-  enable_animations_ = enable_graphics;
+  enable_graphics_ = enable_graphics;
 
   if (!filename.size()) {
     // No file. Default 10x10 blank world with no walls and no beepers.
@@ -205,13 +209,13 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
                     y_dimen_ * pxPerCell + margin);
 
   DrawWorld();
-  DrawRobot(position_.x * pxPerCell + pxPerCell / 2,
-            position_.y * pxPerCell + pxPerCell / 2);
-  Show(kLongDuration);
+  DrawRobot();
+  Show(/* long duration */ true);
 }
 
 void Robot::Move() {
   if (finished_) return;
+  PromptBeforeActionIfNeeded();
   switch (position_.orientation) {
     case Orientation::kNorth:
       if (position_.y == 0) {
@@ -258,6 +262,7 @@ void Robot::Move() {
 
 void Robot::TurnLeft() {
   if (finished_) return;
+  PromptBeforeActionIfNeeded();
   switch (position_.orientation) {
     case Orientation::kNorth:
       position_.orientation = Orientation::kWest;
@@ -274,11 +279,12 @@ void Robot::TurnLeft() {
   }
   DrawWorld();
   DrawRobot();
-  Show(kLongDuration);
+  Show(/* long duration */ true);
 }
 
 void Robot::PutBeeper() {
   if (finished_) return;
+  PromptBeforeActionIfNeeded();
   if (!HasBeepersInBag()) {
     Error(RobotError::kCannotPutBeeper);
     return;
@@ -288,11 +294,12 @@ void Robot::PutBeeper() {
   cell.SetNumBeepers(cell.GetNumBeepers() + 1);
   DrawWorld();
   DrawRobot();
-  Show(kLongDuration);
+  Show(/* long duration */ true);
 }
 
 void Robot::PickBeeper() {
   if (finished_) return;
+  PromptBeforeActionIfNeeded();
   if (!BeepersPresent()) {
     Error(RobotError::kCannotPickBeeper);
     return;
@@ -302,7 +309,7 @@ void Robot::PickBeeper() {
   beeper_count_++;
   DrawWorld();
   DrawRobot();
-  Show(kLongDuration);
+  Show(/* long duration */ true);
 }
 
 bool Robot::HasBeepersInBag() const { return beeper_count_ > 0; }
@@ -344,8 +351,24 @@ bool Robot::FacingWest() const {
 void Robot::Finish() {
   if (finished_) return;
   finished_ = true;
-  if (enable_animations_) {
+  if (enable_csv_output_) {
+    WriteWorldCSV();
+    std::cout << "Finished. ctrl+c to exit." << std::endl << std::flush;
+  }
+  if (enable_graphics_) {
     image_.ShowUntilClosed("Karel's World");
+  }
+}
+
+void Robot::EnablePromptBeforeAction() { prompt_between_actions_ = true; }
+
+void Robot::EnableCSVOutput() {
+  enable_csv_output_ = true;
+  prompt_between_actions_ = true;
+  if (initialized_) {
+    // If we are already initialized write the world CSV. The initial image
+    // has already been shown.
+    WriteWorldCSV();
   }
 }
 
@@ -367,11 +390,79 @@ int Robot::GetWorldHeight() const { return y_dimen_; }
 
 RobotError Robot::GetError() const { return error_; }
 
-void Robot::Show(int duration) {
+void Robot::Show(bool long_duration) {
   if (finished_) return;
-  if (enable_animations_) {
-    image_.ShowForMs(duration * speed_, "Karel's World");
+  if (long_duration && enable_csv_output_) {
+    WriteWorldCSV();
   }
+  if (enable_graphics_) {
+    image_.ShowForMs((long_duration ? kLongDuration : kShortDuration) * speed_,
+                     "Karel's World");
+  }
+}
+
+void Robot::WriteWorldCSV() {
+  const std::string filename = "karel.csv";
+  std::ofstream csv;
+  csv.open(filename);
+  if (!csv.is_open()) {
+    std::cout << "Error: Could not open " << filename
+              << " to write Karel's world. Perhaps it is opened by another "
+                 "application?"
+              << std::endl
+              << std::flush;
+    return;
+  }
+  for (int y = 0; y < y_dimen_; y++) {
+    for (int x = 0; x < x_dimen_; x++) {
+      // print contents walls.
+      Cell& cell = world_[x][y];
+      csv << "\"";
+      if (x == position_.x && y == position_.y) {
+        if (position_.orientation == Orientation::kNorth) {
+          csv << "kn ";
+        } else if (position_.orientation == Orientation::kEast) {
+          csv << "ke ";
+        } else if (position_.orientation == Orientation::kSouth) {
+          csv << "ks ";
+        } else {
+          csv << "kw ";
+        }
+      }
+      if (cell.GetNumBeepers() > 0) {
+        csv << "b ";
+      } else {
+        csv << "o ";
+      }
+      csv << "(" << x + 1 << "," << y_dimen_ - y << ")\",";
+      if (x < x_dimen_ - 1 &&
+          (cell.HasEastWall() || world_[x + 1][y].HasWestWall())) {
+        csv << "w,";
+      } else {
+        csv << ",";
+      }
+    }
+    csv << std::endl;
+    if (y < y_dimen_ - 1) {
+      for (int x = 0; x < x_dimen_; x++) {
+        // print bottom walls and next top walls
+        if (world_[x][y].HasSouthWall() || world_[x][y + 1].HasNorthWall()) {
+          csv << "w,,";
+        } else {
+          csv << ",,";
+        }
+      }
+    }
+    csv << std::endl;
+  }
+  csv << std::endl;
+  csv << "symbol,kn,ke,ks,kw,o,b,w,\"(x,y)\"\n";
+  csv << "meaning,Karel facing north,Karel facing east, Karel facing south, "
+         "Karel facing west,empty cell,cell with at least one beeper,wall "
+         "between cells,cell coordinates\n";
+  // TODO: Write error state and a key.
+  csv.close();
+  std::cout << "World state written to " << filename << std::endl << std::flush;
 }
 
 void Robot::Error(RobotError error) {
@@ -597,18 +688,25 @@ void Robot::DrawRobot(int pixel_x, int pixel_y) {
 }
 
 void Robot::AnimateMove(int next_x, int next_y) {
-  int steps = enable_animations_ ? kNumAnimationSteps : 0;
+  int steps = enable_graphics_ ? kNumAnimationSteps : 0;
   for (int i = 1; i <= steps; i++) {
     DrawWorld();
     double fraction = i * 1.0 / steps;
     double x = position_.x * (1 - fraction) + next_x * fraction;
     double y = position_.y * (1 - fraction) + next_y * fraction;
     DrawRobot(x * pxPerCell + pxPerCell / 2, y * pxPerCell + pxPerCell / 2);
-    Show(kShortDuration);
+    Show(/* short duration */ false);
   }
   position_.x = next_x;
   position_.y = next_y;
-  Show(kLongDuration);
+  Show(/* long duration */ true);
+}
+
+void Robot::PromptBeforeActionIfNeeded() {
+  if (!prompt_between_actions_) return;
+  std::cout << "Paused. Enter any character to continue: " << std::flush;
+  std::string value;
+  std::cin >> value;
 }
 
 // Note that the orientation is not populated. This is just a helper to

@@ -4,11 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://opensource.org/licenses/MIT.
 
-#include <math.h>
-
 #include <fstream>
-#include <iostream>
-#include <limits>
 #include <vector>
 
 #include "../../graphics/image.h"
@@ -45,10 +41,10 @@ class Robot {
   Robot(const Robot&) = delete;
   karel::Robot& operator=(const Robot&) = delete;
 
-  /////////////////////////////////////////////////////////
-  // Methods for core Karel functionality                //
-  // These methods allow interaction with Karel.         //
-  /////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////
+  //   Methods for core Karel functionality                //
+  //   These methods allow interaction with Karel.         //
+  ///////////////////////////////////////////////////////////
 
   /**
    * Move Karel forward one step. Results in an error if Karel cannot move
@@ -129,10 +125,24 @@ class Robot {
    */
   void Finish();
 
-  /////////////////////////////////////////////////////////////////////
-  // Methods for tests. Tests should access Robot with GetInstance   //
-  // and may inspect its state with the following methods.           //
-  /////////////////////////////////////////////////////////////////////
+  /**
+   * Causes Robot to wait between each action function (Move, TurnLeft,
+   * PutBeeper, PickBeeper) until the user enters input into the terminal to
+   * proceed. This may be used to improve the robot's accessibility.
+   */
+  void EnablePromptBeforeAction();
+
+  /**
+   * Enables Robot CSV output. This will print Karel's world to a CSV between
+   * each action, and prompt to continue to the next action. May be used by
+   * screen-reader users to inspect Karel's world.
+   */
+  void EnableCSVOutput();
+
+  ///////////////////////////////////////////////////////////////////////
+  //   Methods for tests. Tests should access Robot with GetInstance   //
+  //   and may inspect its state with the following methods.           //
+  ///////////////////////////////////////////////////////////////////////
 
   /**
    * Gets the orientation that Karel is facing. May be simpler to use this in
@@ -193,9 +203,16 @@ class Robot {
                   bool force_initialize);
 
   /**
-   * Shows karel's world, blocking for the given |duration| in milliseconds.
+   * Shows karel's world, blocking for a long duration or a short duration.
+   * If long_duration, may also print to the terminal when EnableTerminalOutput
+   * was called.
    */
-  void Show(int duration);
+  void Show(bool long_duration);
+
+  /**
+   * Writes the world to a CSV file.
+   */
+  void WriteWorldCSV();
 
   /**
    * Displays an error and finishes the program.
@@ -219,6 +236,8 @@ class Robot {
 
   void AnimateMove(int next_x, int next_y);
 
+  void PromptBeforeActionIfNeeded();
+
   /**
    * Helper method to parse position from the next item in a file stream.
    * Note that the orientation is not populated. This is just a helper to
@@ -234,9 +253,16 @@ class Robot {
    */
   PositionAndOrientation ParsePositionAndOrientation(std::fstream& file) const;
 
-  // Whether animations are enabled. They should probably be disabled for
+  // Whether graphics are enabled. They should probably be disabled for
   // testing.
-  bool enable_animations_ = true;
+  bool enable_graphics_ = true;
+
+  // Whether to prompt the user to continue between actions. May be useful as
+  // an accessibility feature.
+  bool prompt_between_actions_ = false;
+
+  // Whether to enable terminal output -- a text-based display of Karel's world.
+  bool enable_csv_output_ = false;
 
   // Speed multiplier for animation.
   double speed_ = 1.0;

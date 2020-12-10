@@ -105,3 +105,13 @@ void Finish() {
   karel::Robot& r = karel::Robot::GetInstance();
   r.Finish();
 }
+
+void EnableCSVOutput() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  r.EnableCSVOutput();
+}
+
+void EnablePromptBeforeAction() {
+  karel::Robot& r = karel::Robot::GetInstance();
+  r.EnablePromptBeforeAction();
+}

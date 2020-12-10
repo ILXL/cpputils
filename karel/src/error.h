@@ -11,6 +11,9 @@
 
 namespace karel {
 
+/**
+ * Defines an error state for Karel. kNoError means that there is no error.
+ */
 enum RobotError {
   kNoError = 0,
   kCannotMoveNorth,
