@@ -22,6 +22,7 @@ using karel::RobotError;
 
 // Test TODOs:
 // Test loading bad files and helpful output
+// Test CSV output: walls and beepers
 
 bool IsBasicallyInfinite(int number) {
   return number > std::numeric_limits<int>::max() / 2;
@@ -35,19 +36,12 @@ void CellIsEmptyWithNoWalls(const Cell& cell) {
   ASSERT_FALSE(cell.HasWestWall());
 }
 
-class KarelTest : public testing::Test {
- public:
-  void SetUp() override {
-    // TODO.
-  }
-};
-
-TEST_F(KarelTest, GetsKarelInstance) {
+TEST(KarelTest, GetsKarelInstance) {
   Robot& r = Robot::GetInstance(/* enable animations */ false,
                                 /* force initialize */ true);
 }
 
-TEST_F(KarelTest, DefaultWorld) {
+TEST(KarelTest, DefaultWorld) {
   Robot& r = Robot::GetInstance(/* enable animations */ false,
                                 /* force initialize */ true);
 
@@ -69,7 +63,7 @@ TEST_F(KarelTest, DefaultWorld) {
   ASSERT_TRUE(IsBasicallyInfinite(r.GetNumBeepersInBag()));
 }
 
-TEST_F(KarelTest, LoadsWorld) {
+TEST(KarelTest, LoadsWorld) {
   Robot& r =
       Robot::InitializeInstance("worlds/2x1.w", /* enable animations */ false,
                                 /* force initialize */ true);
@@ -84,7 +78,7 @@ TEST_F(KarelTest, LoadsWorld) {
   ASSERT_TRUE(IsBasicallyInfinite(r.GetNumBeepersInBag()));
 }
 
-TEST_F(KarelTest, LoadsWorldWithInfinityBeepers) {
+TEST(KarelTest, LoadsWorldWithInfinityBeepers) {
   // INFINITY vs INFINITE
   Robot& r = Robot::InitializeInstance("worlds/8x1.w",
                                        /* enable animations */ false,
@@ -92,21 +86,21 @@ TEST_F(KarelTest, LoadsWorldWithInfinityBeepers) {
   ASSERT_TRUE(IsBasicallyInfinite(r.GetNumBeepersInBag()));
 }
 
-TEST_F(KarelTest, LoadsWorldWithNoBeepersInBag) {
+TEST(KarelTest, LoadsWorldWithNoBeepersInBag) {
   Robot& r = Robot::InitializeInstance("worlds/beepers.w",
                                        /* enable animations */ false,
                                        /* force initialize */ true);
   EXPECT_EQ(0, r.GetNumBeepersInBag());
 }
 
-TEST_F(KarelTest, LoadsWorldWithFiniteBeepers) {
+TEST(KarelTest, LoadsWorldWithFiniteBeepers) {
   Robot& r = Robot::InitializeInstance("worlds/inner_walls.w",
                                        /* enable animations */ false,
                                        /* force initialize */ true);
   EXPECT_EQ(42, r.GetNumBeepersInBag());
 }
 
-TEST_F(KarelTest, LoadsWorldWithBeepersInCells) {
+TEST(KarelTest, LoadsWorldWithBeepersInCells) {
   Robot& r = Robot::InitializeInstance("worlds/beepers.w",
                                        /* enable animations */ false,
                                        /* force initialize */ true);
@@ -116,7 +110,7 @@ TEST_F(KarelTest, LoadsWorldWithBeepersInCells) {
   EXPECT_EQ(4, r.GetCell(4, 4).GetNumBeepers());
 }
 
-TEST_F(KarelTest, LoadsWorldWithOuterWalls) {
+TEST(KarelTest, LoadsWorldWithOuterWalls) {
   Robot& r = Robot::InitializeInstance("worlds/outer_walls.w",
                                        /* enable animations */ false,
                                        /* force initialize */ true);
@@ -137,7 +131,7 @@ TEST_F(KarelTest, LoadsWorldWithOuterWalls) {
   ASSERT_EQ(6, r.GetYPosition());
 }
 
-TEST_F(KarelTest, LoadsWorldWithInnerWalls) {
+TEST(KarelTest, LoadsWorldWithInnerWalls) {
   Robot& r = Robot::InitializeInstance("worlds/inner_walls.w",
                                        /* enable animations */ false,
                                        /* force initialize */ true);
@@ -153,7 +147,7 @@ TEST_F(KarelTest, LoadsWorldWithInnerWalls) {
   ASSERT_EQ(2, r.GetYPosition());
 }
 
-TEST_F(KarelTest, CannotMoveThroughOuterWalls) {
+TEST(KarelTest, CannotMoveThroughOuterWalls) {
   for (int i = 0; i < 4; i++) {
     Robot& r = Robot::InitializeInstance("worlds/outer_walls.w",
                                          /* enable animations */ false,
@@ -185,7 +179,7 @@ TEST_F(KarelTest, CannotMoveThroughOuterWalls) {
   }
 }
 
-TEST_F(KarelTest, CannotMoveThroughInnerWalls) {
+TEST(KarelTest, CannotMoveThroughInnerWalls) {
   for (int i = 0; i < 4; i++) {
     Robot& r = Robot::InitializeInstance("worlds/inner_walls.w",
                                          /* enable animations */ false,
@@ -217,7 +211,7 @@ TEST_F(KarelTest, CannotMoveThroughInnerWalls) {
   }
 }
 
-TEST_F(KarelTest, CannotMoveThroughWorldEdges) {
+TEST(KarelTest, CannotMoveThroughWorldEdges) {
   for (int i = 0; i < 4; i++) {
     Robot& r = Robot::InitializeInstance("worlds/2x1.w",
                                          /* enable animations */ false,
@@ -245,7 +239,7 @@ TEST_F(KarelTest, CannotMoveThroughWorldEdges) {
   }
 }
 
-TEST_F(KarelTest, PutsAndPicksBeeper) {
+TEST(KarelTest, PutsAndPicksBeeper) {
   // Default world has no beepers, and Karel has infinite.
   Robot& r = Robot::GetInstance(/* enable animations */ false,
                                 /* force initialize */ true);
@@ -268,7 +262,7 @@ TEST_F(KarelTest, PutsAndPicksBeeper) {
   }
 }
 
-TEST_F(KarelTest, PicksManyBeepers) {
+TEST(KarelTest, PicksManyBeepers) {
   Robot& r = Robot::InitializeInstance("worlds/beepers.w",
                                        /* enable animations */ false,
                                        /* force initialize */ true);
@@ -329,7 +323,7 @@ TEST_F(KarelTest, PicksManyBeepers) {
   EXPECT_TRUE(NoBeepersPresent());
 }
 
-TEST_F(KarelTest, CannotPickMissingBeeper) {
+TEST(KarelTest, CannotPickMissingBeeper) {
   Robot& r = Robot::GetInstance(/* enable animations */ false,
                                 /* force initialize */ true);
   ASSERT_EQ(RobotError::kNoError, r.GetError());
@@ -337,7 +331,7 @@ TEST_F(KarelTest, CannotPickMissingBeeper) {
   ASSERT_EQ(RobotError::kCannotPickBeeper, r.GetError());
 }
 
-TEST_F(KarelTest, CannotPutWhenBeeperBagEmpty) {
+TEST(KarelTest, CannotPutWhenBeeperBagEmpty) {
   Robot& r = Robot::InitializeInstance("worlds/beepers.w",
                                        /* enable animations */ false,
                                        /* force initialize */ true);
@@ -346,7 +340,7 @@ TEST_F(KarelTest, CannotPutWhenBeeperBagEmpty) {
   ASSERT_EQ(RobotError::kCannotPutBeeper, r.GetError());
 }
 
-TEST_F(KarelTest, TurnsLeft) {
+TEST(KarelTest, TurnsLeft) {
   Robot& r = Robot::GetInstance(/* enable animations */ false,
                                 /* force initialize */ true);
   int count = 10;
@@ -401,7 +395,7 @@ TEST_F(KarelTest, TurnsLeft) {
   }
 }
 
-TEST_F(KarelTest, MovesEastAndWest) {
+TEST(KarelTest, MovesEastAndWest) {
   Robot& r =
       Robot::InitializeInstance("worlds/8x1.w", /* enable animations */ false,
                                 /* force initialize */ true);
@@ -423,7 +417,7 @@ TEST_F(KarelTest, MovesEastAndWest) {
   }
 }
 
-TEST_F(KarelTest, MovesNorthAndSouth) {
+TEST(KarelTest, MovesNorthAndSouth) {
   Robot& r =
       Robot::InitializeInstance("worlds/1x8.w", /* enable animations */ false,
                                 /* force initialize */ true);
@@ -446,7 +440,7 @@ TEST_F(KarelTest, MovesNorthAndSouth) {
   }
 }
 
-TEST_F(KarelTest, DoesNotTakeActionAfterErrorState) {
+TEST(KarelTest, DoesNotTakeActionAfterErrorState) {
   Robot& r =
       Robot::InitializeInstance("worlds/beepers.w", /* enable graphics */ false,
                                 /* force initialize */ true);
@@ -484,6 +478,112 @@ TEST_F(KarelTest, DoesNotTakeActionAfterErrorState) {
   EXPECT_EQ(RobotError::kCannotPickBeeper, r.GetError());
   EXPECT_FALSE(BeepersPresent());
   EXPECT_EQ(0, r.GetNumBeepersInBag());
+}
+
+TEST(KarelTest, SavesWorldBmp) {
+  Robot& r = Robot::GetInstance(/* enable graphics */ false,
+                                /* force initialize */ true);
+  std::string name = "test_world.bmp";
+  std::ifstream stream(name.c_str());
+  ASSERT_FALSE(stream.good());
+  r.SaveWorldBmp(name);
+  graphics::Image image;
+  image.Load(name);
+  ASSERT_TRUE(image.GetWidth() > 0);
+  ASSERT_TRUE(image.GetHeight() > 0);
+  remove(name.c_str());
+}
+
+TEST(KarelTest, PromptsBetweenActionsWhenSet) {
+  std::streambuf* original = std::cin.rdbuf();
+  std::istringstream stream("c\nc\n");
+  std::cin.rdbuf(stream.rdbuf());
+
+  std::streambuf* original_out = std::cout.rdbuf();
+  std::stringstream stream_out;
+  std::cout.rdbuf(stream_out.rdbuf());
+
+  Robot& r = Robot::InitializeInstance("worlds/2x1.w",
+                                       /* enable graphics */ false,
+                                       /* force initialize */ true);
+  Move();
+  TurnLeft();
+  TurnLeft();
+  EXPECT_EQ(2, r.GetXPosition());
+  EXPECT_EQ(Orientation::kWest, r.GetOrientation());
+  EXPECT_THAT(
+      stream_out.str(),
+      Not(testing::MatchesRegex(".*Enter any character to continue.*Enter any "
+                                "character to continue.*")));
+
+  EnablePromptBeforeAction();
+  Move();
+  TurnLeft();
+  EXPECT_EQ(1, r.GetXPosition());
+  EXPECT_EQ(Orientation::kSouth, r.GetOrientation());
+  EXPECT_THAT(stream_out.str(),
+              testing::MatchesRegex(".*Enter any character to continue.*Enter "
+                                    "any character to continue.*"));
+
+  std::cin.rdbuf(original);
+  std::cout.rdbuf(original_out);
+}
+
+TEST(KarelTest, PromptsBetweenActionsWhenCSVOutputSet) {
+  std::streambuf* original = std::cin.rdbuf();
+  std::istringstream stream("ada\nlovelace\n");
+  std::cin.rdbuf(stream.rdbuf());
+
+  std::streambuf* original_out = std::cout.rdbuf();
+  std::stringstream stream_out;
+  std::cout.rdbuf(stream_out.rdbuf());
+
+  Robot& r = Robot::InitializeInstance("worlds/2x1.w",
+                                       /* enable graphics */ false,
+                                       /* force initialize */ true);
+  Move();
+  TurnLeft();
+  TurnLeft();
+  EXPECT_EQ(2, r.GetXPosition());
+  EXPECT_EQ(Orientation::kWest, r.GetOrientation());
+  EXPECT_THAT(
+      stream_out.str(),
+      Not(testing::MatchesRegex(".*Enter any character to continue.*Enter any "
+                                "character to continue.*")));
+
+  EnableCSVOutput();
+  Move();
+  TurnLeft();
+  EXPECT_EQ(1, r.GetXPosition());
+  EXPECT_EQ(Orientation::kSouth, r.GetOrientation());
+  EXPECT_THAT(stream_out.str(),
+              testing::MatchesRegex(".*Enter any character to continue.*Enter "
+                                    "any character to continue.*"));
+
+  std::cin.rdbuf(original);
+  std::cout.rdbuf(original_out);
+  remove("karel.csv");
+}
+
+TEST(KarelTest, GeneratesCSVOutput) {
+  Robot& r = Robot::InitializeInstance("worlds/2x1.w",
+                                       /* enable graphics */ false,
+                                       /* force initialize */ true);
+  std::ifstream stream("karel.csv");
+  ASSERT_FALSE(stream.good());
+
+  EnableCSVOutput();
+  // Should immediately write the world to a CSV file.
+  stream = std::ifstream("karel.csv");
+  ASSERT_TRUE(stream.good());
+
+  // The first line of the CSV is the world with karel in the first cell.
+  std::string line;
+  ASSERT_TRUE(std::getline(stream, line));
+  ASSERT_TRUE(line.size() > 0);
+  ASSERT_EQ(line, "\"ke o (1,1)\",,\"o (2,1)\"");
+
+  remove("karel.csv");
 }
 
 int main(int argc, char** argv) {

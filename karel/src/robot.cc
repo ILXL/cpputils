@@ -18,10 +18,6 @@
 #include "error.h"
 #include "orientation.h"
 
-// TODO: Save to image file (maybe for testing)
-// documentation
-// file error states
-
 namespace karel {
 
 namespace {
@@ -64,6 +60,8 @@ const graphics::Color kWhite(255, 255, 255);
 const graphics::Color kWallColor(50, 50, 50);
 const graphics::Color kGridColor(220, 220, 220);
 const graphics::Color kErrorColor(173, 0, 35);
+
+const std::string kCSVFilename = "karel.csv";
 
 // Helper methods
 void ParseWorldFileError(std::string error_text, int line_number) {
@@ -431,6 +429,13 @@ int Robot::GetWorldHeight() const { return y_dimen_; }
 
 RobotError Robot::GetError() const { return error_; }
 
+void Robot::SaveWorldBmp(std::string filename) const {
+  if (!image_.SaveImageBmp(filename)) {
+    std::cout << "Failed to save image to " << filename << std::endl
+              << std::flush;
+  }
+}
+
 void Robot::Show(bool long_duration) {
   if (finished_) return;
   if (long_duration && enable_csv_output_) {
@@ -443,11 +448,10 @@ void Robot::Show(bool long_duration) {
 }
 
 void Robot::WriteWorldCSV() {
-  const std::string filename = "karel.csv";
   std::ofstream csv;
-  csv.open(filename);
+  csv.open(kCSVFilename);
   if (!csv.is_open()) {
-    std::cout << "Error: Could not open " << filename
+    std::cout << "Error: Could not open " << kCSVFilename
               << " to write Karel's world. Perhaps it is opened by another "
                  "application?"
               << std::endl
@@ -476,16 +480,17 @@ void Robot::WriteWorldCSV() {
         csv << "o ";
       }
       csv << "(" << x + 1 << "," << y_dimen_ - y << ")\",";
-      if (x < x_dimen_ - 1 &&
-          (cell.HasEastWall() || world_[x + 1][y].HasWestWall())) {
-        csv << "w,";
-      } else {
-        csv << ",";
+      if (x < x_dimen_ - 1) {
+        if (cell.HasEastWall() || world_[x + 1][y].HasWestWall()) {
+          csv << "w,";
+        } else {
+          csv << ",";
+        }
       }
     }
     csv << std::endl;
     if (y < y_dimen_ - 1) {
-      for (int x = 0; x < x_dimen_; x++) {
+      for (int x = 0; x < x_dimen_ - 1; x++) {
         // print bottom walls and next top walls
         if (world_[x][y].HasSouthWall() || world_[x][y + 1].HasNorthWall()) {
           csv << "w,,";
@@ -503,7 +508,8 @@ void Robot::WriteWorldCSV() {
          "between cells,cell coordinates\n";
   // TODO: Write error state and a key.
   csv.close();
-  std::cout << "World state written to " << filename << std::endl << std::flush;
+  std::cout << "World state written to " << kCSVFilename << std::endl
+            << std::flush;
 }
 
 void Robot::Error(RobotError error) {

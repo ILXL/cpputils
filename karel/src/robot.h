@@ -188,6 +188,11 @@ class Robot {
    */
   RobotError GetError() const;
 
+  /**
+   * Saves an image of Karel's world with the given filename in .bmp format.
+   */
+   void SaveWorldBmp(std::string filename) const;
+
  private:
   // Private constructor: Robot can only be accessed with GetInstance.
   Robot();
