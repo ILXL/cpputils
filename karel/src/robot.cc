@@ -65,6 +65,35 @@ const graphics::Color kWallColor(50, 50, 50);
 const graphics::Color kGridColor(220, 220, 220);
 const graphics::Color kErrorColor(173, 0, 35);
 
+// Helper methods
+void ParseWorldFileError(std::string error_text, int line_number) {
+  if (line_number > 0) {
+    error_text += " (line " + std::to_string(line_number) + ")";
+  }
+  std::cout << error_text << std::endl << std::flush;
+  throw error_text;
+}
+
+void CheckParsePosition(char open_paren, char comma, char closed_paren,
+                        int line_number) {
+  if (open_paren != '(') {
+    ParseWorldFileError("Invalid syntax: expected open parenthesis but found " +
+                            std::string(1, open_paren),
+                        line_number);
+  }
+  if (comma != ',') {
+    ParseWorldFileError(
+        "Invalid syntax: expected a comma but found " + std::string(1, comma),
+        line_number);
+  }
+  if (closed_paren != ')') {
+    ParseWorldFileError(
+        "Invalid syntax: expected closed parenthesis but found " +
+            std::string(1, closed_paren),
+        line_number);
+  }
+}
+
 }  // namespace
 
 Robot::Robot() {}
@@ -96,8 +125,6 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
                        bool force_initialize) {
   // Ensure only intitialized once unless |force_initialize| is true.
   if (initialized_ && !force_initialize) return;
-  initialized_ = true;
-  error_ = RobotError::kNoError;
   finished_ = false;
   if (force_initialize) {
     prompt_between_actions_ = false;
@@ -124,13 +151,13 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
     try {
       world_file.open(filename);
     } catch (std::ifstream::failure e) {
-      throw std::string("Error opening file");
+      ParseWorldFileError("Error opening file " + filename, -1);
     }
     if (!world_file.is_open()) {
-      // TODO: Replace throwables with better error codes?
-      throw std::string("Error opening file");
+      ParseWorldFileError("Error opening file " + filename, -1);
     }
     std::string line;
+    int line_number = 1;
 
     const std::string dimension_prefix = "Dimension:";
     const std::string beeper_prefix = "Beeper:";
@@ -143,15 +170,19 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
     char open_paren, comma, closed_paren;
     if (!(world_file >> line_prefix >> open_paren >> x_dimen_ >> comma >>
           y_dimen_ >> closed_paren)) {
-      throw std::string("Could not find Dimension in first line");
+      ParseWorldFileError(
+          "Could not parse world dimensions from the first line", line_number);
     }
     if (line_prefix != dimension_prefix) {
-      throw std::string("Could not find Dimension in first line");
+      ParseWorldFileError("Could not find \"Dimension:\" in first line",
+                          line_number);
     }
+    CheckParsePosition(open_paren, comma, closed_paren, line_number);
     if (x_dimen_ < 1 || y_dimen_ < 1) {
-      throw std::string(
+      ParseWorldFileError(
           "Cannot load a world less than 1 cell wide or less than 1 cell "
-          "tall");
+          "tall",
+          line_number);
     }
     for (int i = 0; i < x_dimen_; i++) {
       world_.push_back(std::vector<Cell>());
@@ -163,20 +194,23 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
     // Read the rest of the file to get beepers and walls.
     // TODO: May need better error checking.
     while (world_file >> line_prefix) {
+      line_number++;
       if (line_prefix == wall_prefix) {
-        PositionAndOrientation wall = ParsePositionAndOrientation(world_file);
+        PositionAndOrientation wall =
+            ParsePositionAndOrientation(world_file, line_number);
         world_[wall.x][wall.y].AddWall(wall.orientation);
       } else if (line_prefix == beeper_prefix) {
-        PositionAndOrientation beeper = ParsePosition(world_file);
+        PositionAndOrientation beeper = ParsePosition(world_file, line_number);
         int count;
         if (!(world_file >> count)) {
-          throw std::string("Error reading Beeper count");
+          ParseWorldFileError("Error reading Beeper count", line_number);
         }
         world_[beeper.x][beeper.y].SetNumBeepers(count);
       } else if (line_prefix == bag_prefix) {
         std::string beepers;
         if (!(world_file >> beepers)) {
-          throw std::string("Error reading quantity for BeeperBag");
+          ParseWorldFileError("Error reading quantity for BeeperBag",
+                              line_number);
         }
         if (beepers == "INFINITY" || beepers == "INFINITE") {
           beeper_count_ = std::numeric_limits<int>::max();
@@ -184,21 +218,22 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
           try {
             beeper_count_ = stoi(beepers);
           } catch (std::invalid_argument& e) {
-            throw std::string("Unknown BeeperBag quanity, " + beepers);
+            ParseWorldFileError("Unknown BeeperBag quanity, " + beepers,
+                                line_number);
           }
         }
       } else if (line_prefix == karel_prefix) {
-        position_ = ParsePositionAndOrientation(world_file);
+        position_ = ParsePositionAndOrientation(world_file, line_number);
       } else if (line_prefix == speed_prefix) {
         if (!(world_file >> speed_)) {
-          throw std::string("Error reading Speed");
+          ParseWorldFileError("Error reading Speed", line_number);
         }
         if (speed_ < 0) {
-          throw std::string("Speed must be greater than 0");
+          ParseWorldFileError("Speed must be greater than 0", line_number);
         }
       } else {
-        std::cout << "unexpected token in file: " << line_prefix << std::endl
-                  << std::flush;
+        ParseWorldFileError("Unexpected token in file: " + line_prefix,
+                            line_number);
         break;
       }
     }
@@ -207,6 +242,9 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
   int min_width = 5 * pxPerCell + margin;
   image_.Initialize(std::max(x_dimen_ * pxPerCell + margin, min_width),
                     y_dimen_ * pxPerCell + margin);
+
+  initialized_ = true;
+  error_ = RobotError::kNoError;
 
   DrawWorld();
   DrawRobot();
@@ -354,6 +392,9 @@ void Robot::Finish() {
   if (enable_csv_output_) {
     WriteWorldCSV();
     std::cout << "Finished. ctrl+c to exit." << std::endl << std::flush;
+  } else {
+    std::cout << "Finished. Close the image or ctrl+c to exit." << std::endl
+              << std::flush;
   }
   if (enable_graphics_) {
     image_.ShowUntilClosed("Karel's World");
@@ -712,12 +753,14 @@ void Robot::PromptBeforeActionIfNeeded() {
 // Note that the orientation is not populated. This is just a helper to
 // get the x and y position from a file with the next items in the stream
 // being (x, y)
-PositionAndOrientation Robot::ParsePosition(std::fstream& file) const {
+PositionAndOrientation Robot::ParsePosition(std::fstream& file,
+                                            int line_number) const {
   char open_paren, comma, closed_paren;
   int x, y;
   if (!(file >> open_paren >> x >> comma >> y >> closed_paren)) {
-    throw std::string("Error reading position");
+    ParseWorldFileError("Error reading position", line_number);
   }
+  CheckParsePosition(open_paren, comma, closed_paren, line_number);
   PositionAndOrientation result;
   // Convert y in the file to y on-screen. In the file, (1, 1) is the
   // bottom left corner.
@@ -731,11 +774,11 @@ PositionAndOrientation Robot::ParsePosition(std::fstream& file) const {
 // (3, 7) East
 // Direction may be lower-case or have an uppercase first letter.
 PositionAndOrientation Robot::ParsePositionAndOrientation(
-    std::fstream& file) const {
-  PositionAndOrientation result = ParsePosition(file);
+    std::fstream& file, int line_number) const {
+  PositionAndOrientation result = ParsePosition(file, line_number);
   std::string direction;
   if (!(file >> direction)) {
-    throw std::string("Error reading orientation");
+    ParseWorldFileError("Error reading orientation", line_number);
   }
   // Ensure the first character is lower cased.
   direction[0] = tolower(direction[0]);
@@ -748,7 +791,7 @@ PositionAndOrientation Robot::ParsePositionAndOrientation(
   } else if (direction == "west") {
     result.orientation = Orientation::kWest;
   } else {
-    throw std::string("Unknown orientation " + direction);
+    ParseWorldFileError("Unknown orientation " + direction, line_number);
   }
   return result;
 }

@@ -244,14 +244,14 @@ class Robot {
    * get the x and y position from a file with the next items in the stream
    * being (x, y)
    */
-  PositionAndOrientation ParsePosition(std::fstream& file) const;
+  PositionAndOrientation ParsePosition(std::fstream& file, int line_number) const;
 
   /**
    * Helper to get orientation of the form, `(x, y) direction`, for example,
    * (3, 7) East
    * Direction may be lower-case or have an uppercase first letter.
    */
-  PositionAndOrientation ParsePositionAndOrientation(std::fstream& file) const;
+  PositionAndOrientation ParsePositionAndOrientation(std::fstream& file, int line_number) const;
 
   // Whether graphics are enabled. They should probably be disabled for
   // testing.
