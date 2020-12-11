@@ -581,7 +581,7 @@ TEST(KarelTest, GeneratesCSVOutput) {
   std::string line;
   ASSERT_TRUE(std::getline(stream, line));
   ASSERT_TRUE(line.size() > 0);
-  ASSERT_EQ(line, "\"ke o (1,1)\",,\"o (2,1)\"");
+  ASSERT_EQ(line, "\"ke o (1,1)\",,\"o (2,1)\",");
 
   remove("karel.csv");
 }
