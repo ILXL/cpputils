@@ -22,7 +22,7 @@ Karel the Robot is a gentle introductory programming language created by [Dr. Ri
 
 Karel lives in a two-dimensional grid and has a position and an orientation (north, east, south or west). Each cell of the grid may contain one or more beepers, or no beepers at all. Karel has a bag of beepers (which may be empty). Cells may be separated by walls.
 
-Karel has four actions: they can can move forward, turn left, put down a beeper or pick up a beeper. In addition, Karel is able to check state of the area around themselves. Karel cannot move through walls or off the edge of the world.
+Karel has four actions: they can move forward, turn left, put down a beeper or pick up a beeper. In addition, Karel is able to check state of the area around themselves. Karel cannot move through walls or off the edge of the world.
 
 ### Accessibility
 

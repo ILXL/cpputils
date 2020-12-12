@@ -92,6 +92,34 @@ void CheckParsePosition(char open_paren, char comma, char closed_paren,
   }
 }
 
+std::string GetErrorMessage(RobotError error) {
+  std::string message = "Error: ";
+  switch (error) {
+    case kNoError:
+      // This shouldn't happen.
+      return "";
+    case kCannotMoveNorth:
+      message += " Cannot move north";
+      break;
+    case kCannotMoveEast:
+      message += "  Cannot move east";
+      break;
+    case kCannotMoveSouth:
+      message += " Cannot move south";
+      break;
+    case kCannotMoveWest:
+      message += "  Cannot move west";
+      break;
+    case kCannotPickBeeper:
+      message += "Cannot pick beeper\n(No beepers present)";
+      break;
+    case kCannotPutBeeper:
+      message += " Cannot put beeper\n(No beepers in bag)";
+      break;
+  }
+  return message;
+}
+
 }  // namespace
 
 Robot::Robot() {}
@@ -128,6 +156,10 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
     prompt_between_actions_ = false;
     enable_csv_output_ = false;
   }
+  // Reset default speed and beeper count.
+  speed_ = 1;
+  // Nearly infinite beepers.
+  beeper_count_ = std::numeric_limits<int>::max();
   world_.clear();
   enable_graphics_ = enable_graphics;
 
@@ -141,8 +173,6 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
         world_[i].push_back(Cell());
       }
     }
-    // Nearly infinite beepers.
-    beeper_count_ = std::numeric_limits<int>::max();
     position_ = {0, kDefaultDimen - 1, Orientation::kEast};
   } else {
     std::fstream world_file;
@@ -190,7 +220,6 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
     }
 
     // Read the rest of the file to get beepers and walls.
-    // TODO: May need better error checking.
     while (world_file >> line_prefix) {
       line_number++;
       if (line_prefix == wall_prefix) {
@@ -501,12 +530,11 @@ void Robot::WriteWorldCSV() {
     }
     csv << std::endl;
   }
-  csv << std::endl;
+  csv << GetErrorMessage(error_) << std::endl;
   csv << "symbol,kn,ke,ks,kw,o,b,w,\"(x,y)\"\n";
   csv << "meaning,Karel facing north,Karel facing east, Karel facing south, "
          "Karel facing west,empty cell,cell with at least one beeper,wall "
          "between cells,cell coordinates\n";
-  // TODO: Write error state and a key.
   csv.close();
   std::cout << "World state written to " << kCSVFilename << std::endl
             << std::flush;
@@ -514,30 +542,10 @@ void Robot::WriteWorldCSV() {
 
 void Robot::Error(RobotError error) {
   error_ = error;
-  std::string message = "Error: ";
-  switch (error) {
-    case kNoError:
-      // This shouldn't happen.
-      return;
-    case kCannotMoveNorth:
-      message += " Cannot move north";
-      break;
-    case kCannotMoveEast:
-      message += "  Cannot move east";
-      break;
-    case kCannotMoveSouth:
-      message += " Cannot move south";
-      break;
-    case kCannotMoveWest:
-      message += "  Cannot move west";
-      break;
-    case kCannotPickBeeper:
-      message += "Cannot pick beeper\n(No beepers present)";
-      break;
-    case kCannotPutBeeper:
-      message += " Cannot put beeper\n(No beepers in bag)";
-      break;
+  if (error_ == RobotError::kNoError) {
+    return;
   }
+  std::string message = GetErrorMessage(error);
   std::cout << message << std::endl << std::flush;
   int approx_width = 25 * kErrorFontSize / 4;
   int text_x = std::max(2, image_.GetWidth() / 2 - approx_width);
