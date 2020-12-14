@@ -257,6 +257,9 @@ void Robot::Initialize(std::string filename, bool enable_graphics,
         }
         if (speed_ < 0) {
           ParseWorldFileError("Speed must be greater than 0", line_number);
+        } else if (speed_ < 0.1) {
+          // Minimum speed.
+          speed_ = 0.1;
         }
       } else {
         ParseWorldFileError("Unexpected token in file: " + line_prefix,
@@ -475,7 +478,7 @@ void Robot::Show(bool long_duration) {
     WriteWorldCSV();
   }
   if (enable_graphics_) {
-    image_.ShowForMs((long_duration ? kLongDuration : kShortDuration) * speed_,
+    image_.ShowForMs((long_duration ? kLongDuration : kShortDuration) / speed_,
                      "Karel's World");
   }
 }
@@ -523,7 +526,7 @@ void Robot::WriteWorldCSV() {
     }
     csv << std::endl;
     if (y < y_dimen_ - 1) {
-      for (int x = 0; x < x_dimen_ - 1; x++) {
+      for (int x = 0; x < x_dimen_; x++) {
         // print bottom walls and next top walls
         if (world_[x][y].HasSouthWall() || world_[x][y + 1].HasNorthWall()) {
           csv << "w,,";
