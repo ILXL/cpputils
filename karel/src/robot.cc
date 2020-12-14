@@ -393,12 +393,12 @@ bool Robot::FrontIsClear() const {
 
 bool Robot::LeftIsClear() const {
   return DirectionIsClear(static_cast<Orientation>(
-      (static_cast<int>(position_.orientation) + 1) % 4));
+      (static_cast<int>(position_.orientation) - 1 + 4) % 4));
 }
 
 bool Robot::RightIsClear() const {
   return DirectionIsClear(static_cast<Orientation>(
-      (static_cast<int>(position_.orientation) - 1 + 4) % 4));
+      (static_cast<int>(position_.orientation) + 1) % 4));
 }
 
 bool Robot::FacingNorth() const {

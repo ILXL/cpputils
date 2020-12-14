@@ -61,6 +61,11 @@ TEST(KarelTest, DefaultWorld) {
   ASSERT_EQ(1, r.GetYPosition());
   ASSERT_EQ(Orientation::kEast, r.GetOrientation());
   ASSERT_TRUE(IsBasicallyInfinite(r.GetNumBeepersInBag()));
+  // Facing east, so the right is blocked.
+  EXPECT_FALSE(RightIsClear());
+  EXPECT_TRUE(RightIsBlocked());
+  EXPECT_TRUE(LeftIsClear());
+  EXPECT_FALSE(LeftIsBlocked());
 }
 
 TEST(KarelTest, LoadsWorld) {
@@ -76,6 +81,13 @@ TEST(KarelTest, LoadsWorld) {
   ASSERT_EQ(1, r.GetYPosition());
   ASSERT_EQ(Orientation::kEast, r.GetOrientation());
   ASSERT_TRUE(IsBasicallyInfinite(r.GetNumBeepersInBag()));
+
+  ASSERT_TRUE(FrontIsClear());
+  ASSERT_FALSE(FrontIsBlocked());
+  EXPECT_FALSE(RightIsClear());
+  EXPECT_TRUE(RightIsBlocked());
+  EXPECT_FALSE(LeftIsClear());
+  EXPECT_TRUE(LeftIsBlocked());
 }
 
 TEST(KarelTest, LoadsWorldWithInfinityBeepers) {
