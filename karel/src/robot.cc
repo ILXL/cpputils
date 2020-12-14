@@ -354,7 +354,9 @@ void Robot::PutBeeper() {
     Error(RobotError::kCannotPutBeeper);
     return;
   }
-  beeper_count_--;
+  if (beeper_count_ != std::numeric_limits<int>::max()) {
+    beeper_count_--;
+  }
   Cell& cell = world_[position_.x][position_.y];
   cell.SetNumBeepers(cell.GetNumBeepers() + 1);
   DrawWorld();
@@ -371,7 +373,9 @@ void Robot::PickBeeper() {
   }
   Cell& cell = world_[position_.x][position_.y];
   cell.SetNumBeepers(cell.GetNumBeepers() - 1);
-  beeper_count_++;
+  if (beeper_count_ != std::numeric_limits<int>::max()) {
+    beeper_count_++;
+  }
   DrawWorld();
   DrawRobot();
   Show(/* long duration */ true);
