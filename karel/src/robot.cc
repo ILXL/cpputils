@@ -511,7 +511,7 @@ void Robot::WriteWorldCSV() {
         }
       }
       if (cell.GetNumBeepers() > 0) {
-        csv << "b ";
+        csv << "b" << cell.GetNumBeepers() << " ";
       } else {
         csv << "o ";
       }
@@ -540,7 +540,7 @@ void Robot::WriteWorldCSV() {
   csv << GetErrorMessage(error_) << std::endl;
   csv << "symbol,kn,ke,ks,kw,o,b,w,\"(x,y)\"\n";
   csv << "meaning,Karel facing north,Karel facing east, Karel facing south, "
-         "Karel facing west,empty cell,cell with at least one beeper,wall "
+         "Karel facing west,empty cell,cell with beepers and count,wall "
          "between cells,cell coordinates\n";
   csv.close();
   std::cout << "World state written to " << kCSVFilename << std::endl
@@ -644,7 +644,8 @@ void Robot::DrawWorld() {
       image_.DrawLine(x_center, y_center - markSize / 2, x_center,
                       y_center + markSize / 2, markColor, kWallThickness);
       Cell& cell = world_[i][j];
-      if (cell.GetNumBeepers() > 0) {
+      int beeper_count = cell.GetNumBeepers();
+      if (beeper_count > 0) {
         // Draw the beepers. Beepers are stacked so you can't tell if there's
         // more than one in a stack.
         // trig to get diamonds from thick lines!
@@ -658,6 +659,11 @@ void Robot::DrawWorld() {
         image_.DrawLine(x_center - inner_line_size, y_center - inner_line_size,
                         x_center + inner_line_size, y_center + inner_line_size,
                         innerBeeperColor, inner_beeper_size);
+        if (beeper_count > 1) {
+          // Draw the beeper count in the cell if it's biger than 1.
+          image_.DrawText(x_center - fontSize / 4, y_center - fontSize / 2,
+                          std::to_string(beeper_count), fontSize, kWallColor);
+        }
       }
       // Draw the walls.
       if (cell.HasNorthWall()) {
