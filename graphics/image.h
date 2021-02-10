@@ -278,6 +278,28 @@ class Image {
                      int blue);
 
   /**
+   * Draws a polygon whose vertices are listed in |points| and colored with
+   * |color|. Each vertex is represented by it's x and y coordinate, and are
+   * listed sequentially in the vector. For example, a polygon with three
+   * vertices (0, 0), (0, 2), (2,1) is represented as a vector of integers
+   * {0, 0, 0, 2, 2, 1}. The last vertex will connect with the first vertex in
+   * the list. Returns false if params are out of bounds.
+   */
+  bool DrawPolygon(std::vector<int>& points, const Color& color) {
+    return DrawPolgyon(points, color.Red(), color.Green(), color.Blue());
+  }
+
+  /**
+   * Draws a polygon whose vertices are listed in |points| and colored with
+   * |red|, |green|, |blue|. Each vertex is represented by it's x and y
+   * coordinate, and are listed sequentially in the vector. For example, a
+   * polygon with three vertices (0, 0), (0, 2), (2,1) is represented as a
+   * vector of integers {0, 0, 0, 2, 2, 1}. The last vertex will connect with
+   * the first vertex in* the list. Returns false if params are out of bounds.
+   */
+  bool DrawPolygon(std::vector<int>& points, int red, int green, int blue);
+
+  /**
    * Draws the string |text| with position (x,y) at the top left corner,
    * with |font_size| in pixels, colored by |color|. Returns false if the
    * params are out of bounds.

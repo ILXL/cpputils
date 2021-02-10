@@ -11,6 +11,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "cimg/CImg.h"
 
@@ -235,6 +236,27 @@ bool Image::DrawRectangle(int x, int y, int width, int height, int red,
     return false;
   }
   cimage_->draw_rectangle(x, y, x + width - 1, y + height - 1, color);
+  return true;
+}
+
+bool DrawPolygon(std::vector<int>& points, int red, int green, int blue) {
+  const int color[] = {red, green, blue};
+  if (!CheckColorInBounds(color)) {
+    return false;
+  }
+  for (int i = 0; i < points.size(); i += 2) {
+    if (!CheckPixelInBounds(i, i + 1) {
+      return false;
+    }
+  }
+  CImg<int> c_points(points.size(), 2);
+  for (int i = 0; i < points.size(); i += 2) {
+    c_points(i, 0) = points[i];
+    c_points(i, 1) = points[i+1];
+  }
+
+  cimage_->draw_polygon(c_points, color);
+
   return true;
 }
 
