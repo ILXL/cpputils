@@ -125,7 +125,7 @@ TEST(ImageTest, Drawing) {
     }
   }
   std::vector<int> points = {20, 20, 20, 22, 22, 21};
-  image.DrawPolygon(points, blue);
+  image.DrawPolygon(points, red);
   EXPECT_EQ(image.GetColor(20, 21), red);
   EXPECT_EQ(image.GetColor(21, 21), red);  
 
@@ -138,7 +138,7 @@ TEST(ImageTest, Drawing) {
 
   std::vector<int> out_points = {-1, 0, 0, 0, -2, 0};
   image.DrawPolygon(out_points, red);
-  EXPECT_EQ(image.GetColor(0, 0, white);
+  EXPECT_EQ(image.GetColor(0, 0), white);
 
   // Hard to test the line because of anti-aliasing.
   image.DrawLine(0, 0, 40, 40, 255, 0, 0);

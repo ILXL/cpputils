@@ -239,22 +239,26 @@ bool Image::DrawRectangle(int x, int y, int width, int height, int red,
   return true;
 }
 
-bool DrawPolygon(std::vector<int>& points, int red, int green, int blue) {
+bool Image::DrawPolygon(std::vector<int>& points, int red, int green, int blue) {
   const int color[] = {red, green, blue};
   if (!CheckColorInBounds(color)) {
     return false;
   }
+  if (points.size() % 2 != 0) {
+    cout << "Invalid vector of vertices. Each vertex should be represented by 2 integers." << endl;
+    return false;
+  }
   for (int i = 0; i < points.size(); i += 2) {
-    if (!CheckPixelInBounds(i, i + 1) {
+    if (!CheckPixelInBounds(points[i], points[i + 1])) {
       return false;
     }
   }
-  CImg<int> c_points(points.size(), 2);
+  CImg<int> c_points(points.size() / 2, 2);
+  int c_point_loc = 0;
   for (int i = 0; i < points.size(); i += 2) {
-    c_points(i, 0) = points[i];
-    c_points(i, 1) = points[i+1];
+    c_points(c_point_loc, 0) = points[i];
+    c_points(c_point_loc++, 1) = points[i+1];
   }
-
   cimage_->draw_polygon(c_points, color);
 
   return true;

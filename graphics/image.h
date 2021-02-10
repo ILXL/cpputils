@@ -8,6 +8,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "image_event.h"
 
@@ -286,7 +287,7 @@ class Image {
    * the list. Returns false if params are out of bounds.
    */
   bool DrawPolygon(std::vector<int>& points, const Color& color) {
-    return DrawPolgyon(points, color.Red(), color.Green(), color.Blue());
+    return DrawPolygon(points, color.Red(), color.Green(), color.Blue());
   }
 
   /**
