@@ -239,7 +239,7 @@ bool Image::DrawRectangle(int x, int y, int width, int height, int red,
   return true;
 }
 
-bool Image::DrawPolygon(std::vector<int>& points, int red, int green, int blue) {
+bool Image::DrawPolygon(const std::vector<int>& points, int red, int green, int blue) {
   const int color[] = {red, green, blue};
   if (!CheckColorInBounds(color)) {
     return false;
