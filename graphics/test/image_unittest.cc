@@ -109,6 +109,7 @@ TEST(ImageTest, Drawing) {
   graphics::Image image(50, 50);
   graphics::Color white(255, 255, 255);
   graphics::Color blue(0, 0, 255);
+  graphics::Color red(255, 0, 0);
   image.DrawCircle(20, 20, 5, blue);
   // Spot check some pixels.
   EXPECT_EQ(image.GetColor(20, 20), blue);
@@ -123,12 +124,20 @@ TEST(ImageTest, Drawing) {
       EXPECT_EQ(image.GetBlue(i, j), 0);
     }
   }
+  std::vector<int> points = {20, 20, 20, 22, 22, 21};
+  image.DrawPolygon(points, red);
+  EXPECT_EQ(image.GetColor(20, 21), red);
+  EXPECT_EQ(image.GetColor(21, 21), red);  
 
   // Drawing something out of bounds doesn't work.
   image.DrawRectangle(-1, -1, 50, 50, 0, 255, 0);
   EXPECT_EQ(image.GetColor(0, 0), white);
 
   image.DrawCircle(40, 50, 100, 0, 255, 0);
+  EXPECT_EQ(image.GetColor(0, 0), white);
+
+  std::vector<int> out_points = {-1, 0, 0, 0, -2, 0};
+  image.DrawPolygon(out_points, red);
   EXPECT_EQ(image.GetColor(0, 0), white);
 
   // Hard to test the line because of anti-aliasing.
